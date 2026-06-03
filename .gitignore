@@ -1,0 +1,14 @@
+# 外部克隆的子项目，不纳入本仓库版本管理
+/data-juicer/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
