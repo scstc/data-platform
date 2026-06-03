@@ -12,3 +12,6 @@ venv/
 .idea/
 .vscode/
 .DS_Store
+
+# oh-my-claudecode 工具本机会话状态
+.omc/
