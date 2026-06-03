@@ -7,7 +7,7 @@
 | 仓库 | 远端 | 说明 |
 |------|------|------|
 | `data-platform` | `scstc/data-platform` | 主项目仓库(本仓库) |
-| `data-juicer` | `scstc/data-juicer` | 派生(fork)自阿里 ModelScope 的 [`modelscope/data-juicer`](https://github.com/modelscope/data-juicer) |
+| `data-juicer` | `scstc/data-juicer` | 派生(fork)自阿里的 [`datajuicer/data-juicer`](https://github.com/datajuicer/data-juicer) |
 
 `data-juicer` 被克隆在本仓库的 `data-juicer/` 目录下,但已通过 `.gitignore` 排除,**不纳入 `data-platform` 的版本管理**——它是一个独立维护的 Git 仓库。
 
@@ -27,7 +27,7 @@
 
 | 分支 | 用途 |
 |------|------|
-| `main` | **阿里上游(`modelscope/data-juicer`)的镜像**,只做 fast-forward 同步,不直接提交 |
+| `main` | **阿里上游(`datajuicer/data-juicer`)的镜像**,只做 fast-forward 同步,不直接提交 |
 | `dev` | 在上游基础上的二次开发 / 定制 |
 | `prod` | 经 `dev` 验证后合入的生产部署版 |
 
@@ -67,4 +67,4 @@ Data-Juicer 是阿里巴巴开源的一个面向大模型(LLM)的数据处理系
 
 与 Megatron、DeepSpeed 等训练框架以及 HuggingFace 数据集兼容。
 
-GitHub:`github.com/modelscope/data-juicer`
+GitHub:`github.com/datajuicer/data-juicer`
