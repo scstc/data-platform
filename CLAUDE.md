@@ -8,8 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 仓库 | 路径 | 远端 | 说明 |
 |------|------|------|------|
-| ai-data-platform | `.`（本仓库） | `scstc/ai-data-platform` | 主项目：文档、dashboard 静态产物、工作区脚手架 |
+| ai-data-platform | `.`（本仓库） | `scstc/ai-data-platform` | 主项目：文档、dashboard 静态产物、frontend 前端、工作区脚手架 |
 | data-juicer | `data-juicer/` | `scstc/data-juicer` | fork 自阿里 `datajuicer/data-juicer`，已被本仓库 `.gitignore` 排除 |
+
+> `frontend/` 是本仓库的普通目录（Ant Design Pro v6 前端，非独立仓库），其内部约定见 `frontend/CLAUDE.md`。
 
 两仓库均为 `main` / `dev` / `prod` 三分支模型，日常开发都在 `dev`。
 
