@@ -34,7 +34,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `/adp-init` | 首次初始化工作区：clone data-juicer（dev 分支）到 `data-juicer/` |
 | `/adp-dashboard` | 同步最新图谱数据到 `dashboard/` 并后台启动 `python3 -m http.server 8765` |
 
-dashboard 是纯静态产物（demo 模式，无访问控制），随仓库提交，也通过 `.github/workflows/pages.yml` 发布到 GitHub Pages。重建产物的流程见 `.claude/commands/adp-dashboard.md`。
+dashboard 是纯静态产物（demo 模式，无访问控制），随仓库提交。重建产物的流程见 `.claude/commands/adp-dashboard.md`。
+
+## GitHub Pages 发布
+
+`dashboard/` 通过 `.github/workflows/pages.yml` 自动发布到 GitHub Pages（`https://scstc.github.io/ai-data-platform/`）：
+
+- 触发条件：push 到 `dev` 且改动涉及 `dashboard/**`（也支持手动 workflow_dispatch）
+- CI **不做构建**，直接把 `dashboard/` 目录作为 artifact 部署——构建在本地完成后提交
+- Pages 部署在 `/ai-data-platform/` 子路径下，因此静态产物有两个硬性要求（改 dashboard 构建时勿破坏）：
+  1. Vite 构建必须用**相对路径** base（否则资源 404）
+  2. demo 模式加载图谱数据（knowledge-graph.json 等）必须用**相对 URL**
+- workflow 已通过 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` 切到 Node 24
 
 ## data-juicer 架构速览
 
