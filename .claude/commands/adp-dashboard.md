@@ -1,34 +1,52 @@
 ---
-description: 启动 data-juicer 知识图谱 dashboard（understand-anything 插件的薄包装，自动指向 data-juicer/ 目录）
+description: 启动 data-juicer 知识图谱 dashboard（直接启动 Vite 服务，输出带 token 的访问 URL）
 ---
 
 # /adp-dashboard — 启动 data-juicer 知识图谱 Dashboard
 
-本命令是 understand-anything 插件 `/understand-dashboard` 的项目级包装：图谱数据在
-`data-juicer/.understand-anything/`（子仓库目录），而会话通常在父仓库根目录打开，
-直接跑插件命令会找错路径——本命令固定指向正确目录。
+直接启动 understand-anything 的 dashboard 服务，图谱数据固定指向本仓库的 `data-juicer/`。
 
 ## 前置条件
 
-- understand-anything 插件已启用（本仓库 `.claude/settings.json` 已声明，首次会提示信任）
-- `data-juicer/.understand-anything/knowledge-graph.json` 存在；没有则先：
-  `cd data-juicer` 后运行 `/understand --language zh`
+`data-juicer/.understand-anything/knowledge-graph.json` 存在；没有则先
+`cd data-juicer` 运行 `/understand --language zh` 生成。
 
-## 执行
+## 执行步骤
 
-调用 Skill `understand-anything:understand-dashboard`，参数传 data-juicer 的**绝对路径**：
+### 第一步：定位插件目录（取已安装的最新版本）
+
+```bash
+PLUGIN_ROOT=$(ls -d ~/.claude/plugins/cache/understand-anything/understand-anything/*/ | sort -V | tail -1)
+DASH="$PLUGIN_ROOT/packages/dashboard"
+```
+
+### 第二步：首次（或插件升级后）构建
+
+依赖和构建产物已存在时整步跳过：
+
+```bash
+if [ ! -d "$DASH/node_modules" ] || [ ! -d "$PLUGIN_ROOT/packages/core/dist" ]; then
+  (cd "$DASH" && pnpm install)
+  (cd "$PLUGIN_ROOT" && pnpm --filter @understand-anything/core build)
+fi
+```
+
+### 第三步：后台启动 Vite
+
+```bash
+cd "$DASH" && GRAPH_DIR=<父仓库根目录绝对路径>/data-juicer npx vite --host 127.0.0.1
+```
+
+用 Bash 工具的 run_in_background 运行，然后从输出里抓取这一行：
 
 ```
-<父仓库根目录>/data-juicer
+🔑  Dashboard URL: http://127.0.0.1:<PORT>?token=<TOKEN>
 ```
-
-插件会自行完成：定位插件 root → pnpm install/构建（首次）→ 后台启动 Vite →
-输出带 token 的访问 URL。
 
 ## 汇报要求
 
-- 必须把**完整 URL（含 `?token=` 参数）**给用户——没有 token 会被访问门拦住
-- 说明服务在后台运行，以及如何停止（kill 对应后台任务）
+- 把**完整 URL（含 `?token=`）**给用户——没有 token 会被访问门拦住
+- 说明服务在后台运行；停止方式：kill 对应后台任务
 
 ## 注意
 
