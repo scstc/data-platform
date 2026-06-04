@@ -38,6 +38,15 @@ http://127.0.0.1:8001/
 登录（mock）：admin / ant.design
 ```
 
+## 两种数据模式
+
+| 模式 | 启动命令 | 数据 |
+|------|---------|------|
+| mock（默认） | `PORT=8001 npm run start` | `frontend/mock/` 内存态，重启复位 |
+| **真实后端** | `PORT=8001 MOCK=none npm run dev` | 经 proxy 走 18003 后端 + PostgreSQL（先 `/adp-server` 起后端） |
+
+登录（admin/ant.design）两种模式都可用——真实后端实现了同形状的登录接口。
+
 ## 注意
 
 - mock 数据在 `frontend/mock/`，带内存态——新建数据源/任务在列表实时可见，重启后复位
