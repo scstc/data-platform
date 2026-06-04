@@ -7,7 +7,10 @@
   },
   "customizations": {
     "vscode": {
-      "extensions": ["anthropic.claude-code"]
+      "extensions": ["anthropic.claude-code"],
+      "settings": {
+        "workbench.colorTheme": "Default Dark Modern"
+      }
     }
   },
   "postCreateCommand": "bash .devcontainer/setup.sh"
