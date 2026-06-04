@@ -12,12 +12,10 @@ dayjs.extend(relativeTime);
 
 import {
   AvatarDropdown,
-  DocLink,
   ErrorBoundary,
   Footer,
   LangDropdown,
   OfflineBanner,
-  VersionDropdown,
 } from '@/components';
 import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
 import defaultSettings from '../config/defaultSettings';
@@ -93,11 +91,7 @@ export const layout: RunTimeLayoutConfig = ({
       // `locale` prop is a locale string, so narrow to the boolean toggle here.
       const localeEnabled =
         (initialState?.settings as { locale?: boolean })?.locale !== false;
-      return [
-        <DocLink key="doc" />,
-        <VersionDropdown key="version" />,
-        localeEnabled && <LangDropdown key="lang" />,
-      ].filter(Boolean);
+      return [localeEnabled && <LangDropdown key="lang" />].filter(Boolean);
     },
     avatarProps: {
       src: initialState?.currentUser?.avatar,
