@@ -1,6 +1,6 @@
-name: deploy-pages
+name: deploy-understand-anything-pages
 
-# dashboard/ 静态产物变更时自动发布到 GitHub Pages
+# understand-anything 知识图谱 dashboard(dashboard/ 静态产物)变更时自动发布到 GitHub Pages
 on:
   push:
     branches: [dev]
