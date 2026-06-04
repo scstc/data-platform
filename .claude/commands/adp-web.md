@@ -20,8 +20,10 @@ cd frontend
 ### 第二步：启动 dev server（端口 8001，避开 dj-api 的 8000）
 
 ```bash
-PORT=8001 npm run dev
+PORT=8001 npm run start
 ```
+
+**坑**：必须用 `start` 不能用 `dev`——模板的 `dev` 脚本带 `MOCK=none`（禁用 mock），所有 `/api/*` 会落到 SPA HTML 兜底，页面拿不到数据。
 
 后台启动，然后等端口就绪：
 

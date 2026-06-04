@@ -1,0 +1,395 @@
+import type { ActionType, ProColumns } from '@ant-design/pro-components';
+import {
+  ModalForm,
+  PageContainer,
+  ProDescriptions,
+  ProFormDependency,
+  ProFormRadio,
+  ProFormSelect,
+  ProFormText,
+  ProFormTextArea,
+  ProTable,
+} from '@ant-design/pro-components';
+import {
+  Button,
+  Drawer,
+  message,
+  Popconfirm,
+  Progress,
+  Tag,
+  Timeline,
+  Typography,
+} from 'antd';
+import dayjs from 'dayjs';
+import { useRef, useState } from 'react';
+import {
+  createIngestTask,
+  deleteIngestTask,
+  getIngestTask,
+  listDataSources,
+  listIngestTasks,
+  rerunIngestTask,
+  stopIngestTask,
+} from '@/services/data-platform';
+
+/** 状态 → 中文标签与 Tag 颜色 */
+const STATUS_META: Record<
+  DataPlatform.IngestTask['status'],
+  { text: string; color: string }
+> = {
+  pending: { text: '待运行', color: 'default' },
+  running: { text: '运行中', color: 'processing' },
+  success: { text: '成功', color: 'success' },
+  failed: { text: '失败', color: 'error' },
+};
+
+/** 格式化调度展示：单次 / cron 表达式 */
+const renderSchedule = (schedule: DataPlatform.IngestSchedule) =>
+  schedule.mode === 'once' ? (
+    <Tag>单次</Tag>
+  ) : (
+    <Typography.Text code>{schedule.cron}</Typography.Text>
+  );
+
+const IngestTasksPage: React.FC = () => {
+  const actionRef = useRef<ActionType | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [currentRow, setCurrentRow] = useState<DataPlatform.IngestTask>();
+
+  /** 打开详情 Drawer：拉取最新单任务（running 会被推进） */
+  const openDetail = async (id: string) => {
+    const res = await getIngestTask(id);
+    if (res?.success) {
+      setCurrentRow(res.data);
+      setDetailOpen(true);
+    }
+  };
+
+  /** 停止运行中的任务 */
+  const handleStop = async (id: string) => {
+    const hide = message.loading('正在停止…', 0);
+    try {
+      await stopIngestTask(id);
+      hide();
+      message.success('任务已停止');
+      actionRef.current?.reload();
+    } catch {
+      hide();
+      message.error('停止失败，请重试');
+    }
+  };
+
+  /** 重跑任务 */
+  const handleRerun = async (id: string) => {
+    const hide = message.loading('正在重跑…', 0);
+    try {
+      await rerunIngestTask(id);
+      hide();
+      message.success('任务已重新启动');
+      actionRef.current?.reload();
+    } catch {
+      hide();
+      message.error('重跑失败，请重试');
+    }
+  };
+
+  /** 删除任务 */
+  const handleDelete = async (id: string) => {
+    const hide = message.loading('正在删除…', 0);
+    try {
+      await deleteIngestTask(id);
+      hide();
+      message.success('删除成功');
+      actionRef.current?.reload();
+    } catch {
+      hide();
+      message.error('删除失败，请重试');
+    }
+  };
+
+  const columns: ProColumns<DataPlatform.IngestTask>[] = [
+    {
+      title: '任务名',
+      dataIndex: 'name',
+      render: (dom, record) => (
+        <a
+          onClick={(e) => {
+            e.preventDefault();
+            openDetail(record.id);
+          }}
+        >
+          {dom}
+        </a>
+      ),
+    },
+    {
+      title: '数据源',
+      dataIndex: 'datasourceName',
+      search: false,
+    },
+    {
+      title: '调度',
+      dataIndex: 'schedule',
+      search: false,
+      render: (_, record) => renderSchedule(record.schedule),
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      valueType: 'select',
+      valueEnum: {
+        pending: { text: '待运行', status: 'Default' },
+        running: { text: '运行中', status: 'Processing' },
+        success: { text: '成功', status: 'Success' },
+        failed: { text: '失败', status: 'Error' },
+      },
+      render: (_, record) => {
+        const meta = STATUS_META[record.status];
+        if (record.status === 'running') {
+          return (
+            <Progress
+              percent={record.progress}
+              size="small"
+              status="active"
+              style={{ minWidth: 120 }}
+            />
+          );
+        }
+        return <Tag color={meta.color}>{meta.text}</Tag>;
+      },
+    },
+    {
+      title: '最近运行',
+      dataIndex: 'lastRunAt',
+      search: false,
+      render: (_, record) =>
+        record.lastRunAt
+          ? dayjs(record.lastRunAt).format('YYYY-MM-DD HH:mm:ss')
+          : '-',
+    },
+    {
+      title: '操作',
+      valueType: 'option',
+      key: 'option',
+      render: (_, record) => [
+        <a key="detail" onClick={() => openDetail(record.id)}>
+          详情
+        </a>,
+        record.status === 'running' ? (
+          <Popconfirm
+            key="stop"
+            title="确认停止该任务？"
+            onConfirm={() => handleStop(record.id)}
+          >
+            <a>停止</a>
+          </Popconfirm>
+        ) : (
+          <a key="rerun" onClick={() => handleRerun(record.id)}>
+            重跑
+          </a>
+        ),
+        <Popconfirm
+          key="delete"
+          title="确认删除该任务？"
+          okText="删除"
+          okButtonProps={{ danger: true }}
+          onConfirm={() => handleDelete(record.id)}
+        >
+          <a style={{ color: 'var(--ant-color-error, #ff4d4f)' }}>删除</a>
+        </Popconfirm>,
+      ],
+    },
+  ];
+
+  return (
+    <PageContainer>
+      <ProTable<DataPlatform.IngestTask, DataPlatform.IngestTaskListParams>
+        headerTitle="采集任务"
+        actionRef={actionRef}
+        rowKey="id"
+        search={{ labelWidth: 80 }}
+        polling={5000}
+        request={async (params) => {
+          const { current, pageSize, name, status } = params;
+          const res = await listIngestTasks({
+            current,
+            pageSize,
+            name,
+            status,
+          });
+          // 对运行中的任务调用单任务接口推进进度，使轮询时进度可见
+          const running = res.data.filter((t) => t.status === 'running');
+          if (running.length > 0) {
+            const advanced = await Promise.all(
+              running.map((t) => getIngestTask(t.id).catch(() => null)),
+            );
+            const map = new Map(
+              advanced
+                .filter(
+                  (
+                    r,
+                  ): r is { data: DataPlatform.IngestTask; success: boolean } =>
+                    Boolean(r?.success),
+                )
+                .map((r) => [r.data.id, r.data]),
+            );
+            return {
+              data: res.data.map((t) => map.get(t.id) ?? t),
+              total: res.total,
+              success: res.success,
+            };
+          }
+          return {
+            data: res.data,
+            total: res.total,
+            success: res.success,
+          };
+        }}
+        columns={columns}
+        toolBarRender={() => [
+          <ModalForm<DataPlatform.IngestTaskCreate>
+            key="create"
+            title="新建采集任务"
+            trigger={<Button type="primary">新建任务</Button>}
+            modalProps={{ destroyOnHidden: true }}
+            initialValues={{ schedule: { mode: 'once' } }}
+            onFinish={async (values) => {
+              try {
+                await createIngestTask(values);
+                message.success('采集任务创建成功');
+                actionRef.current?.reload();
+                return true;
+              } catch {
+                message.error('创建失败，请重试');
+                return false;
+              }
+            }}
+          >
+            <ProFormText
+              name="name"
+              label="任务名"
+              placeholder="请输入任务名称"
+              rules={[{ required: true, message: '请输入任务名称' }]}
+            />
+            <ProFormSelect
+              name="datasourceId"
+              label="数据源"
+              placeholder="请选择数据源"
+              rules={[{ required: true, message: '请选择数据源' }]}
+              request={async () => {
+                const res = await listDataSources({ pageSize: 100 });
+                return res.data.map((d) => ({
+                  label: `${d.name}（${d.type}${d.dbKind ? `/${d.dbKind}` : ''}）`,
+                  value: d.id,
+                }));
+              }}
+            />
+            <ProFormRadio.Group
+              name={['schedule', 'mode']}
+              label="调度方式"
+              rules={[{ required: true, message: '请选择调度方式' }]}
+              options={[
+                { label: '单次', value: 'once' },
+                { label: 'Cron 周期', value: 'cron' },
+              ]}
+            />
+            <ProFormDependency name={[['schedule', 'mode']]}>
+              {({ schedule }) =>
+                schedule?.mode === 'cron' ? (
+                  <ProFormText
+                    name={['schedule', 'cron']}
+                    label="Cron 表达式"
+                    placeholder="如 0 2 * * *（每天凌晨 2 点，分 时 日 月 周）"
+                    rules={[{ required: true, message: '请输入 cron 表达式' }]}
+                  />
+                ) : null
+              }
+            </ProFormDependency>
+            <ProFormTextArea
+              name="filter"
+              label="过滤条件"
+              placeholder="可选，填写采集的过滤条件或说明，如 dt>=2026-01-01"
+              fieldProps={{ rows: 3 }}
+            />
+          </ModalForm>,
+        ]}
+      />
+
+      <Drawer
+        width={560}
+        open={detailOpen}
+        title={currentRow?.name}
+        onClose={() => {
+          setDetailOpen(false);
+          setCurrentRow(undefined);
+        }}
+      >
+        {currentRow && (
+          <>
+            <ProDescriptions<DataPlatform.IngestTask>
+              column={1}
+              dataSource={currentRow}
+              columns={[
+                { title: '任务名', dataIndex: 'name' },
+                { title: '数据源', dataIndex: 'datasourceName' },
+                {
+                  title: '调度',
+                  dataIndex: 'schedule',
+                  render: (_, record) => renderSchedule(record.schedule),
+                },
+                {
+                  title: '状态',
+                  dataIndex: 'status',
+                  render: (_, record) => {
+                    const meta = STATUS_META[record.status];
+                    return <Tag color={meta.color}>{meta.text}</Tag>;
+                  },
+                },
+                {
+                  title: '进度',
+                  dataIndex: 'progress',
+                  render: (_, record) => (
+                    <Progress percent={record.progress} size="small" />
+                  ),
+                },
+                {
+                  title: '创建时间',
+                  dataIndex: 'createdAt',
+                  valueType: 'dateTime',
+                },
+                {
+                  title: '最近运行',
+                  dataIndex: 'lastRunAt',
+                  render: (_, record) =>
+                    record.lastRunAt
+                      ? dayjs(record.lastRunAt).format('YYYY-MM-DD HH:mm:ss')
+                      : '-',
+                },
+              ]}
+            />
+            <Typography.Title level={5} style={{ marginTop: 16 }}>
+              运行日志
+            </Typography.Title>
+            {currentRow.logs && currentRow.logs.length > 0 ? (
+              <Timeline
+                items={currentRow.logs.map((log, idx) => ({
+                  key: idx,
+                  color: log.includes('[ERROR]')
+                    ? 'red'
+                    : log.includes('[WARN]')
+                      ? 'orange'
+                      : 'blue',
+                  children: log,
+                }))}
+              />
+            ) : (
+              <Typography.Text type="secondary">暂无日志</Typography.Text>
+            )}
+          </>
+        )}
+      </Drawer>
+    </PageContainer>
+  );
+};
+
+export default IngestTasksPage;
