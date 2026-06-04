@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | ai-data-platform | `.`（本仓库） | `scstc/ai-data-platform` | 主项目：文档、dashboard 静态产物、frontend 前端、工作区脚手架 |
 | data-juicer | `data-juicer/` | `scstc/data-juicer` | fork 自阿里 `datajuicer/data-juicer`，已被本仓库 `.gitignore` 排除 |
 
-> `frontend/` 是本仓库的普通目录（Ant Design Pro v6 前端，非独立仓库），其内部约定见 `frontend/CLAUDE.md`。
+> `frontend/`（Ant Design Pro v6 前端）与 `backend/`（FastAPI+PostgreSQL 后端）都是本仓库的普通目录（非独立仓库）。前端内部约定见 `frontend/CLAUDE.md`；后端实现前端 `src/services/data-platform` 的接口契约，前端 `MOCK=none` 启动即切真实后端（代理见 `frontend/config/proxy.ts`）。
 
 两仓库均为 `main` / `dev` / `prod` 三分支模型，日常开发都在 `dev`。
 
@@ -36,6 +36,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `/adp-init` | 首次初始化工作区：clone data-juicer（dev 分支）到 `data-juicer/` |
 | `/adp-dashboard` | 同步最新图谱数据到 `dashboard/` 并后台启动 `python3 -m http.server 8765` |
 | `/adp-web` | 启动数据平台前端（Ant Design Pro v6，`:8001`，登录 admin/ant.design） |
+| `/adp-server` | 启动数据平台后端（FastAPI+PG，`:8002`，Swagger 在 `/docs`；PG 容器 `:55433`） |
 | `/dj-demo` | 安装 data-juicer 环境（`uv sync --python 3.11`）并跑通最简 CLI 示例 |
 | `/dj-web` | 启动 data-juicer Web UI（streamlit，`:8501`） |
 | `/dj-api` | 启动 data-juicer HTTP API（FastAPI/uvicorn，`:8000`，Swagger 在 `/docs`） |
