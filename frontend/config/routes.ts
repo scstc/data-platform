@@ -25,22 +25,22 @@ export default [
       },
       {
         path: '/ingest/datasources',
-        name: 'ingest.datasources',
+        name: 'datasources',
         component: './ingest/datasources',
       },
       {
         path: '/ingest/tasks',
-        name: 'ingest.tasks',
+        name: 'tasks',
         component: './ingest/tasks',
       },
       {
         path: '/ingest/upload',
-        name: 'ingest.upload',
+        name: 'upload',
         component: './ingest/upload',
       },
       {
         path: '/ingest/assistant',
-        name: 'ingest.assistant',
+        name: 'assistant',
         component: './ingest/assistant',
       },
     ],
@@ -92,12 +92,12 @@ export default [
       },
       {
         path: '/datasets/list',
-        name: 'datasets.list',
+        name: 'list',
         component: './datasets/list',
       },
       {
         path: '/datasets/presets',
-        name: 'datasets.presets',
+        name: 'presets',
         component: './datasets/presets',
       },
     ],
