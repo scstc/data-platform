@@ -4,7 +4,7 @@
 
 ## 技术栈
 
-Python 3.12 + uv · FastAPI + Pydantic v2 · SQLAlchemy 2.0 async + asyncpg · Alembic · pytest + httpx · ruff。服务端口 **8002**（8000=dj-api，8001=前端，8501=dj-web，8765=dashboard）。
+Python 3.12 + uv · FastAPI + Pydantic v2 · SQLAlchemy 2.0 async + asyncpg · Alembic · pytest + httpx · ruff。服务端口 **18003**（8000=dj-api，8001=前端，8501=dj-web，8765=dashboard）。
 
 ## 数据库
 
@@ -45,10 +45,10 @@ backend/
 
 ## 前端对接
 
-`frontend/config/proxy.ts` 增加 dev 代理项指向 8002；前端 `MOCK=none` 启动即切真实后端，页面代码零改动。
+`frontend/config/proxy.ts` 增加 dev 代理项指向 18003；前端 `MOCK=none` 启动即切真实后端，页面代码零改动。
 
 ## 测试与验收
 
 - pytest：三资源 CRUD 流程、分页筛选、任务状态机、启发式 AI 单测；集成测试连 compose PG（`adp_test` 库，conftest 建表）
-- 验收：`docker compose up` + `alembic upgrade head` + uvicorn 起 8002 → `/docs` 可见 → curl 冒烟 → 前端切真实后端完成数据源新建闭环
+- 验收：`docker compose up` + `alembic upgrade head` + uvicorn 起 18003 → `/docs` 可见 → curl 冒烟 → 前端切真实后端完成数据源新建闭环
 - 配套 `/adp-server` slash command（compose up + 装依赖 + 起服务 + 端口探测）
