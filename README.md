@@ -1,4 +1,4 @@
-# data-platform
+# ai-data-platform
 
 ## 仓库关系
 
@@ -6,16 +6,16 @@
 
 | 仓库 | 远端 | 说明 |
 |------|------|------|
-| `data-platform` | `scstc/data-platform` | 主项目仓库(本仓库) |
+| `ai-data-platform` | `scstc/ai-data-platform` | 主项目仓库(本仓库) |
 | `data-juicer` | `scstc/data-juicer` | 派生(fork)自阿里的 [`datajuicer/data-juicer`](https://github.com/datajuicer/data-juicer) |
 
-`data-juicer` 被克隆在本仓库的 `data-juicer/` 目录下,但已通过 `.gitignore` 排除,**不纳入 `data-platform` 的版本管理**——它是一个独立维护的 Git 仓库。
+`data-juicer` 被克隆在本仓库的 `data-juicer/` 目录下,但已通过 `.gitignore` 排除,**不纳入 `ai-data-platform` 的版本管理**——它是一个独立维护的 Git 仓库。
 
 ## 分支策略
 
 两个仓库统一采用 `main` / `dev` / `prod` 三分支模型,但语义略有不同:
 
-### data-platform(自有项目)
+### ai-data-platform(自有项目)
 
 | 分支 | 用途 |
 |------|------|
