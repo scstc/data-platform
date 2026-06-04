@@ -4,5 +4,10 @@
   "features": {
     "ghcr.io/devcontainers/features/node:1": { "version": "lts" }
   },
+  "customizations": {
+    "vscode": {
+      "extensions": ["anthropic.claude-code"]
+    }
+  },
   "postCreateCommand": "bash .devcontainer/setup.sh"
 }
