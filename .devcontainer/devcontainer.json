@@ -9,7 +9,8 @@
     "vscode": {
       "extensions": ["anthropic.claude-code"],
       "settings": {
-        "workbench.colorTheme": "Default Dark Modern"
+        "workbench.colorTheme": "Default Dark Modern",
+        "terminal.integrated.defaultProfile.linux": "zsh"
       }
     }
   },
