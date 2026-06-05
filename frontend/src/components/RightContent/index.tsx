@@ -1,5 +1,10 @@
-import { CheckOutlined, GlobalOutlined } from '@ant-design/icons';
-import { getAllLocales, getLocale, setLocale } from '@umijs/max';
+import {
+  CheckOutlined,
+  GlobalOutlined,
+  MoonOutlined,
+  SunOutlined,
+} from '@ant-design/icons';
+import { getAllLocales, getLocale, setLocale, useModel } from '@umijs/max';
 import type { MenuProps } from 'antd';
 import { Button } from 'antd';
 import { createStyles } from 'antd-style';
@@ -24,6 +29,35 @@ const useStyles = createStyles(({ token, css }) => ({
     border-radius: ${token.borderRadius}px !important;
   `,
 }));
+
+/** 明暗主题持久化键，app.tsx 启动时读取恢复 */
+export const THEME_STORAGE_KEY = 'adp-navTheme';
+
+export const ThemeSwitch: React.FC = () => {
+  const { styles } = useStyles();
+  const { initialState, setInitialState } = useModel('@@initialState');
+  const isDark = initialState?.settings?.navTheme === 'realDark';
+
+  const toggle = () => {
+    const navTheme = isDark ? 'light' : 'realDark';
+    localStorage.setItem(THEME_STORAGE_KEY, navTheme);
+    setInitialState((s) => ({
+      ...s,
+      settings: { ...s?.settings, navTheme },
+    }));
+  };
+
+  return (
+    <Button
+      type="text"
+      className={styles.action}
+      aria-label={isDark ? '切换为亮色主题' : '切换为暗色主题'}
+      onClick={toggle}
+    >
+      {isDark ? <SunOutlined /> : <MoonOutlined />}
+    </Button>
+  );
+};
 
 export const LangDropdown: React.FC = () => {
   const { styles } = useStyles();

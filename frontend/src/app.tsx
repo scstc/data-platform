@@ -16,6 +16,8 @@ import {
   Footer,
   LangDropdown,
   OfflineBanner,
+  THEME_STORAGE_KEY,
+  ThemeSwitch,
 } from '@/components';
 import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
 import defaultSettings from '../config/defaultSettings';
@@ -23,6 +25,15 @@ import { errorConfig } from './requestErrorConfig';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
+
+/** 在默认设置上合并持久化的明暗主题（ThemeSwitch 写入 localStorage） */
+const loadSettings = (): Partial<LayoutSettings> => {
+  const navTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  return {
+    ...(defaultSettings as Partial<LayoutSettings>),
+    ...(navTheme === 'realDark' || navTheme === 'light' ? { navTheme } : {}),
+  };
+};
 
 /**
  * @see https://umijs.org/docs/api/runtime-config#getinitialstate
@@ -59,7 +70,7 @@ export async function getInitialState(): Promise<{
     return {
       fetchUserInfo,
       currentUser,
-      settings: defaultSettings as Partial<LayoutSettings>,
+      settings: loadSettings(),
       settingDrawerOpen: false,
     };
   }
@@ -91,7 +102,10 @@ export const layout: RunTimeLayoutConfig = ({
       // `locale` prop is a locale string, so narrow to the boolean toggle here.
       const localeEnabled =
         (initialState?.settings as { locale?: boolean })?.locale !== false;
-      return [localeEnabled && <LangDropdown key="lang" />].filter(Boolean);
+      return [
+        <ThemeSwitch key="theme" />,
+        localeEnabled && <LangDropdown key="lang" />,
+      ].filter(Boolean);
     },
     avatarProps: {
       src: initialState?.currentUser?.avatar,
