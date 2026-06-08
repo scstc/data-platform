@@ -69,6 +69,47 @@ declare namespace DataPlatform {
     output?: IngestOutput[];
   };
 
+  /** 加工算子参数定义 */
+  type OperatorParam = {
+    name: string;
+    label: string;
+    type: 'select' | 'number' | 'string';
+    default?: any;
+    options?: string[];
+  };
+
+  /** 加工算子（目录项） */
+  type Operator = {
+    name: string;
+    category: string;
+    label: string;
+    description: string;
+    params: OperatorParam[];
+  };
+
+  /** 加工任务 */
+  type Job = {
+    id: string;
+    name: string;
+    type: string;
+    state: 'pending' | 'running' | 'success' | 'failed';
+    progress: number;
+    error?: string;
+    configYaml?: string;
+    createdAt: string;
+    startedAt?: string;
+    finishedAt?: string;
+    output?: IngestOutput;
+  };
+
+  /** 新建加工任务入参 */
+  type JobCreate = {
+    name: string;
+    type?: string;
+    datasetVersionId: string;
+    operators: { name: string; params?: Record<string, any> }[];
+  };
+
   /** 数据集版本（不可变快照） */
   type DatasetVersion = {
     id: string;

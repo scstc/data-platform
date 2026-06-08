@@ -254,3 +254,44 @@ export async function previewDatasetVersion(
     { method: 'GET', params: { ...params }, ...(options || {}) },
   );
 }
+
+/** 加工算子目录 GET /api/v1/operators */
+export async function listOperators(options?: { [key: string]: any }) {
+  return request<{ data: DataPlatform.Operator[]; success: boolean }>(
+    '/api/v1/operators',
+    { method: 'GET', ...(options || {}) },
+  );
+}
+
+/** 加工任务列表 GET /api/v1/jobs */
+export async function listJobs(
+  params?: { current?: number; pageSize?: number },
+  options?: { [key: string]: any },
+) {
+  return request<DataPlatform.PageResult<DataPlatform.Job>>('/api/v1/jobs', {
+    method: 'GET',
+    params: { ...params },
+    ...(options || {}),
+  });
+}
+
+/** 新建并执行加工任务 POST /api/v1/jobs */
+export async function createJob(
+  body: DataPlatform.JobCreate,
+  options?: { [key: string]: any },
+) {
+  return request<{ data: DataPlatform.Job; success: boolean }>('/api/v1/jobs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+/** 加工任务详情 GET /api/v1/jobs/{id} */
+export async function getJob(id: string, options?: { [key: string]: any }) {
+  return request<{ data: DataPlatform.Job; success: boolean }>(
+    `/api/v1/jobs/${id}`,
+    { method: 'GET', ...(options || {}) },
+  );
+}
