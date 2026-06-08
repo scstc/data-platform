@@ -1,0 +1,166 @@
+"""加工任务路由:算子目录、建任务并执行(子进程跑 dj-process)、列表、详情。"""
+
+from __future__ import annotations
+
+import secrets
+from datetime import UTC, datetime
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.db import get_session
+from app.models.dataset import Dataset
+from app.models.dataset_version import DatasetVersion
+from app.models.job import Job
+from app.schemas.common import CamelModel, PageResponse
+from app.schemas.job import JobCreate, JobRead
+from app.services.engine import EngineError, run_process_job
+from app.services.operator_catalog import OPERATOR_CATALOG
+
+router = APIRouter(tags=["jobs"])
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
+_OPERATOR_NAMES = {op["name"] for op in OPERATOR_CATALOG}
+
+
+class JobItemResponse(CamelModel):
+    """单个加工任务响应：{data:{...}, success:true}。"""
+
+    data: JobRead
+    success: bool = True
+
+
+def _new_job_id() -> str:
+    return f"job-{secrets.token_hex(3)}"
+
+
+def _now() -> datetime:
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
+async def _build_output(session: AsyncSession, job_id: str) -> dict | None:
+    """查该任务的产物版本(按 produced_by_job_id 反查)。"""
+    stmt = (
+        select(DatasetVersion, Dataset)
+        .join(Dataset, Dataset.id == DatasetVersion.dataset_id)
+        .where(DatasetVersion.produced_by_job_id == job_id)
+        .order_by(DatasetVersion.created_at.desc())
+    )
+    row = (await session.execute(stmt)).first()
+    if row is None:
+        return None
+    version, dataset = row
+    return {
+        "datasetId": dataset.id,
+        "datasetName": dataset.name,
+        "versionId": version.id,
+        "versionNo": version.version_no,
+        "rows": version.rows,
+    }
+
+
+def _item(job: Job, output: dict | None = None) -> dict:
+    read = JobRead.model_validate(job)
+    if output is not None:
+        read.output = output
+    return JobItemResponse(data=read).model_dump(by_alias=True, mode="json")
+
+
+@router.get("/operators")
+async def list_operators() -> JSONResponse:
+    """加工算子目录(供前端编排选择)。"""
+    return JSONResponse(content={"data": OPERATOR_CATALOG, "success": True})
+
+
+@router.get("/jobs", response_model=PageResponse[JobRead])
+async def list_jobs(
+    session: SessionDep,
+    current: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, alias="pageSize")] = 10,
+) -> PageResponse[JobRead]:
+    """分页列出加工任务,按创建时间倒序。"""
+    total = await session.scalar(select(func.count()).select_from(Job)) or 0
+    rows = (
+        await session.scalars(
+            select(Job)
+            .order_by(Job.created_at.desc())
+            .offset((current - 1) * page_size)
+            .limit(page_size)
+        )
+    ).all()
+    return PageResponse[JobRead](
+        data=[JobRead.model_validate(r) for r in rows], total=total
+    )
+
+
+@router.post("/jobs")
+async def create_job(body: JobCreate, session: SessionDep) -> JSONResponse:
+    """新建并执行加工任务:对一个数据集版本跑算子流水线 → 产出新版本。"""
+    if not body.operators:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "message": "请至少选择一个算子"},
+        )
+    unknown = [o.name for o in body.operators if o.name not in _OPERATOR_NAMES]
+    if unknown:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "message": f"未知算子:{', '.join(unknown)}"},
+        )
+
+    input_version = await session.get(DatasetVersion, body.dataset_version_id)
+    if input_version is None:
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "message": "数据集版本不存在"},
+        )
+
+    job = Job(
+        id=_new_job_id(),
+        name=body.name,
+        type=body.type,
+        state="running",
+        progress=0,
+        created_by="admin",
+        started_at=_now(),
+    )
+    session.add(job)
+    await session.commit()
+
+    try:
+        _version, yaml_text, log_path = await run_process_job(
+            session,
+            job_id=job.id,
+            input_version=input_version,
+            operators=[o.model_dump() for o in body.operators],
+        )
+        job.state = "success"
+        job.progress = 100
+        job.config_yaml = yaml_text
+        job.logs_uri = log_path
+    except EngineError as exc:
+        job.state = "failed"
+        job.error = str(exc)
+    job.finished_at = _now()
+    await session.commit()
+    await session.refresh(job)
+
+    output = await _build_output(session, job.id)
+    return JSONResponse(content=_item(job, output))
+
+
+@router.get("/jobs/{job_id}")
+async def get_job(job_id: str, session: SessionDep) -> JSONResponse:
+    """加工任务详情(含产物版本)。"""
+    job = await session.get(Job, job_id)
+    if job is None:
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "message": "任务不存在"},
+        )
+    output = await _build_output(session, job.id)
+    return JSONResponse(content=_item(job, output))

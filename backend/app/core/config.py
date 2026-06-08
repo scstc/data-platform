@@ -32,6 +32,15 @@ class Settings(BaseSettings):
         "/Users/enjoy/ai-project/ai-data-platform/backend/var/datasets"
     )
 
+    # data-juicer 加工引擎:dj-process 可执行文件(子进程调用)
+    dj_process_bin: str = (
+        "/Users/enjoy/ai-project/ai-data-platform/data-juicer/.venv/bin/dj-process"
+    )
+    # 单 job 内并行度(传给 dj-process 的 np)
+    engine_np: int = 2
+    # 多 job 并发上限(信号量,避免单机被打爆)
+    engine_concurrency: int = 3
+
     # 允许的跨域来源（前端 dev server）
     cors_origins: list[str] = [
         "http://localhost:8001",
