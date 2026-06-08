@@ -63,10 +63,24 @@ declare namespace DataPlatform {
     extract?: IngestExtract;
     status: 'pending' | 'running' | 'success' | 'failed';
     progress: number;
+    runCount?: number;
     createdAt: string;
     lastRunAt?: string;
     logs?: string[];
     output?: IngestOutput[];
+  };
+
+  /** 采集运行记录（一次运行明细） */
+  type IngestRun = {
+    id: string;
+    taskId: string;
+    status: 'success' | 'failed';
+    rows: number;
+    datasetCount: number;
+    outputs?: IngestOutput[];
+    error?: string;
+    startedAt: string;
+    finishedAt?: string;
   };
 
   /** 加工算子参数定义 */

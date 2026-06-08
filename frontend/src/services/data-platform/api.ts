@@ -138,6 +138,18 @@ export async function rerunIngestTask(id: string, options?: { [key: string]: any
   );
 }
 
+/** 采集任务运行记录 GET /api/v1/ingest-tasks/:id/runs */
+export async function listIngestRuns(
+  id: string,
+  params?: { current?: number; pageSize?: number },
+  options?: { [key: string]: any },
+) {
+  return request<DataPlatform.PageResult<DataPlatform.IngestRun>>(
+    `/api/v1/ingest-tasks/${id}/runs`,
+    { method: 'GET', params: { ...params }, ...(options || {}) },
+  );
+}
+
 /** 停止采集任务 POST /api/v1/ingest-tasks/:id/stop */
 export async function stopIngestTask(id: string, options?: { [key: string]: any }) {
   return request<{ data: DataPlatform.IngestTask; success: boolean }>(

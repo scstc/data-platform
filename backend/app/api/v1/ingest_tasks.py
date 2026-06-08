@@ -26,9 +26,14 @@ from app.core.db import get_session
 from app.models.dataset import Dataset
 from app.models.dataset_version import DatasetVersion
 from app.models.datasource import DataSource
+from app.models.ingest_run import IngestRun
 from app.models.ingest_task import IngestTask
 from app.schemas.common import CamelModel, PageResponse
-from app.schemas.ingest_task import IngestTaskCreate, IngestTaskRead
+from app.schemas.ingest_task import (
+    IngestRunRead,
+    IngestTaskCreate,
+    IngestTaskRead,
+)
 from app.services.ingest_runner import IngestError, run_pg_ingest
 
 router = APIRouter(tags=["ingest-tasks"])
@@ -49,6 +54,11 @@ class IngestTaskItemResponse(CamelModel):
 def _new_task_id() -> str:
     """生成 "task-" + 6 位 hex 主键。"""
     return f"task-{secrets.token_hex(3)}"
+
+
+def _new_run_id() -> str:
+    """生成 "run-" + 6 位 hex 主键。"""
+    return f"run-{secrets.token_hex(3)}"
 
 
 def _now() -> datetime:
@@ -197,11 +207,22 @@ async def rerun_ingest_task(
 
     if is_pg and task.extract:
         task.status = "running"
+        started = task.last_run_at or _now()
         task.logs = [*task.logs, "[INFO] 开始采集(PostgreSQL 真实拉取)"]
         await session.commit()
         try:
             results = await run_pg_ingest(session, task, datasource)
             total_rows = sum(v.rows or 0 for _, v in results)
+            outputs = [
+                {
+                    "datasetId": ds.id,
+                    "datasetName": ds.name,
+                    "versionId": v.id,
+                    "versionNo": v.version_no,
+                    "rows": v.rows,
+                }
+                for ds, v in results
+            ]
             task.status = "success"
             task.progress = PROGRESS_DONE
             task.logs = [
@@ -211,9 +232,34 @@ async def rerun_ingest_task(
                 + "、".join(f"{ds.name}({v.rows or 0}行)" for ds, v in results),
                 "[INFO] 任务完成",
             ]
+            session.add(
+                IngestRun(
+                    id=_new_run_id(),
+                    task_id=task.id,
+                    status="success",
+                    rows=total_rows,
+                    dataset_count=len(results),
+                    outputs=outputs,
+                    started_at=started,
+                    finished_at=_now(),
+                )
+            )
         except IngestError as exc:
             task.status = "failed"
             task.logs = [*task.logs, f"[ERROR] 采集失败:{exc}"]
+            session.add(
+                IngestRun(
+                    id=_new_run_id(),
+                    task_id=task.id,
+                    status="failed",
+                    rows=0,
+                    dataset_count=0,
+                    error=str(exc),
+                    started_at=started,
+                    finished_at=_now(),
+                )
+            )
+        task.run_count += 1
     else:
         task.status = "running"
         task.logs = [*task.logs, "[INFO] 任务重跑，进度重置为 0"]
@@ -221,6 +267,37 @@ async def rerun_ingest_task(
     await session.commit()
     await session.refresh(task)
     return JSONResponse(content=_item(task))
+
+
+@router.get(
+    "/ingest-tasks/{task_id}/runs", response_model=PageResponse[IngestRunRead]
+)
+async def list_ingest_runs(
+    task_id: str,
+    session: SessionDep,
+    current: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, alias="pageSize")] = 20,
+) -> PageResponse[IngestRunRead]:
+    """某采集任务的运行记录,按开始时间倒序。"""
+    base = select(IngestRun).where(IngestRun.task_id == task_id)
+    total = (
+        await session.scalar(
+            select(func.count()).select_from(IngestRun).where(
+                IngestRun.task_id == task_id
+            )
+        )
+        or 0
+    )
+    rows = (
+        await session.scalars(
+            base.order_by(IngestRun.started_at.desc())
+            .offset((current - 1) * page_size)
+            .limit(page_size)
+        )
+    ).all()
+    return PageResponse[IngestRunRead](
+        data=[IngestRunRead.model_validate(r) for r in rows], total=total
+    )
 
 
 @router.post("/ingest-tasks/{task_id}/stop")

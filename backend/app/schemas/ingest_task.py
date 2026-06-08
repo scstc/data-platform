@@ -40,11 +40,26 @@ class IngestTaskRead(CamelModel):
     extract: IngestExtract | None = None
     status: IngestTaskStatus
     progress: int
+    run_count: int = 0
     created_at: datetime
     last_run_at: datetime | None = None
     logs: list[str] | None = None
     # 产物概要列表（仅详情接口填充）：每项 {datasetId, datasetName, versionId, versionNo, rows}
     output: list[dict[str, Any]] | None = None
+
+
+class IngestRunRead(CamelModel):
+    """采集运行记录读模型(一次运行明细)。"""
+
+    id: str
+    task_id: str
+    status: Literal["success", "failed"]
+    rows: int
+    dataset_count: int
+    outputs: list[dict[str, Any]] | None = None
+    error: str | None = None
+    started_at: datetime
+    finished_at: datetime | None = None
 
 
 class IngestTaskCreate(CamelModel):

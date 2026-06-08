@@ -16,6 +16,7 @@ import {
   message,
   Popconfirm,
   Progress,
+  Table,
   Tag,
   Timeline,
   Typography,
@@ -28,6 +29,7 @@ import {
   getIngestTask,
   listDataSources,
   listDatasourceTables,
+  listIngestRuns,
   listIngestTasks,
   rerunIngestTask,
   stopIngestTask,
@@ -60,13 +62,18 @@ const IngestTasksPage: React.FC = () => {
   const [dsMap, setDsMap] = useState<Record<string, DataPlatform.DataSource>>(
     {},
   );
+  const [runs, setRuns] = useState<DataPlatform.IngestRun[]>([]);
 
-  /** 打开详情 Drawer：拉取最新单任务（running 会被推进） */
+  /** 打开详情 Drawer：拉取最新单任务（running 会被推进）+ 运行记录 */
   const openDetail = async (id: string) => {
     const res = await getIngestTask(id);
     if (res?.success) {
       setCurrentRow(res.data);
       setDetailOpen(true);
+      const runRes = await listIngestRuns(id, { pageSize: 50 }).catch(
+        () => null,
+      );
+      setRuns(runRes?.data ?? []);
     }
   };
 
@@ -171,6 +178,21 @@ const IngestTasksPage: React.FC = () => {
         record.lastRunAt
           ? dayjs(record.lastRunAt).format('YYYY-MM-DD HH:mm:ss')
           : '-',
+    },
+    {
+      title: '运行次数',
+      dataIndex: 'runCount',
+      search: false,
+      render: (_, record) => (
+        <a
+          onClick={(e) => {
+            e.preventDefault();
+            openDetail(record.id);
+          }}
+        >
+          {record.runCount ?? 0} 次
+        </a>
+      ),
     },
     {
       title: '操作',
@@ -381,6 +403,7 @@ const IngestTasksPage: React.FC = () => {
         onClose={() => {
           setDetailOpen(false);
           setCurrentRow(undefined);
+          setRuns([]);
         }}
       >
         {currentRow && (
@@ -462,6 +485,49 @@ const IngestTasksPage: React.FC = () => {
                 },
               ]}
             />
+            <Typography.Title level={5} style={{ marginTop: 16 }}>
+              运行记录（共 {currentRow.runCount ?? runs.length} 次）
+            </Typography.Title>
+            {runs.length > 0 ? (
+              <Table<DataPlatform.IngestRun>
+                rowKey="id"
+                size="small"
+                pagination={false}
+                dataSource={runs}
+                columns={[
+                  {
+                    title: '开始时间',
+                    dataIndex: 'startedAt',
+                    render: (v) => dayjs(v).format('YYYY-MM-DD HH:mm:ss'),
+                  },
+                  {
+                    title: '状态',
+                    dataIndex: 'status',
+                    render: (v) =>
+                      v === 'success' ? (
+                        <Tag color="success">成功</Tag>
+                      ) : (
+                        <Tag color="error">失败</Tag>
+                      ),
+                  },
+                  { title: '行数', dataIndex: 'rows' },
+                  { title: '数据集数', dataIndex: 'datasetCount' },
+                  {
+                    title: '产物',
+                    dataIndex: 'outputs',
+                    render: (_, r) =>
+                      r.outputs && r.outputs.length > 0
+                        ? r.outputs.map((o) => o.datasetName).join('、')
+                        : r.error
+                          ? `失败：${r.error}`
+                          : '-',
+                  },
+                ]}
+              />
+            ) : (
+              <Typography.Text type="secondary">暂无运行记录</Typography.Text>
+            )}
+
             <Typography.Title level={5} style={{ marginTop: 16 }}>
               运行日志
             </Typography.Title>
