@@ -8,6 +8,8 @@ _roadhog-api-doc
 
 # production
 /dist
+# utoopack dev 偶发把产物多写到这个错误的嵌套路径(输出路径丢了绝对前缀),守卫一下
+/ai-project
 
 # misc
 .DS_Store
