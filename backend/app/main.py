@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import compat
-from app.api.v1 import ai, datasources, ingest_tasks, uploads
+from app.api.v1 import ai, datasets, datasources, ingest_tasks, uploads
 from app.core.config import settings
 
 
@@ -23,6 +23,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(datasources.router, prefix="/api/v1")
+    app.include_router(datasets.router, prefix="/api/v1")
     app.include_router(ingest_tasks.router, prefix="/api/v1")
     app.include_router(uploads.router, prefix="/api/v1")
     app.include_router(ai.router, prefix="/api/v1")

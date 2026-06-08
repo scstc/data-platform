@@ -27,6 +27,11 @@ class Settings(BaseSettings):
         "/Users/enjoy/ai-project/ai-data-platform/backend/var/uploads"
     )
 
+    # 数据集受管存储目录(落地产物 jsonl,按 <dataset_id>/v<n>/data.jsonl 组织)
+    datasets_dir: str = (
+        "/Users/enjoy/ai-project/ai-data-platform/backend/var/datasets"
+    )
+
     # 允许的跨域来源（前端 dev server）
     cors_origins: list[str] = [
         "http://localhost:8001",
