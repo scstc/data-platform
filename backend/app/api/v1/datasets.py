@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Annotated
 
@@ -129,3 +130,54 @@ async def get_dataset(dataset_id: str, session: SessionDep) -> JSONResponse:
     ).all()
     payload = DatasetResult(data=_to_detail(dataset, list(versions)))
     return JSONResponse(content=payload.model_dump(by_alias=True, mode="json"))
+
+
+@router.get("/dataset-versions/{version_id}/preview")
+async def preview_version(
+    version_id: str,
+    session: SessionDep,
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+) -> JSONResponse:
+    """预览某版本的数据(读 jsonl,分页返回若干行 + 列名 + 总行数)。"""
+    version = await session.get(DatasetVersion, version_id)
+    if version is None:
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "message": "版本不存在"},
+        )
+    path = Path(version.storage_uri)
+    if not path.exists():
+        return JSONResponse(
+            content={
+                "data": [],
+                "columns": [],
+                "total": version.rows or 0,
+                "success": True,
+                "message": "产物文件缺失",
+            }
+        )
+    rows: list[dict] = []
+    with path.open(encoding="utf-8") as fp:
+        for idx, line in enumerate(fp):
+            if idx < offset:
+                continue
+            if len(rows) >= limit:
+                break
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
+    # 列序:首行键序优先,再补后续行出现的新键
+    columns: list[str] = []
+    for rec in rows:
+        for key in rec:
+            if key not in columns:
+                columns.append(key)
+    return JSONResponse(
+        content={
+            "data": rows,
+            "columns": columns,
+            "total": version.rows or 0,
+            "success": True,
+        }
+    )

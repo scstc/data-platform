@@ -69,6 +69,50 @@ declare namespace DataPlatform {
     output?: IngestOutput[];
   };
 
+  /** 数据集版本（不可变快照） */
+  type DatasetVersion = {
+    id: string;
+    datasetId: string;
+    versionNo: number;
+    storageUri: string;
+    statsUri?: string;
+    format: string;
+    rows?: number;
+    size?: number;
+    origin: string;
+    producedByJobId?: string;
+    note?: string;
+    createdAt: string;
+  };
+
+  /** 数据集（元信息） */
+  type Dataset = {
+    id: string;
+    name: string;
+    description?: string;
+    dataType?: string;
+    sensitivityLevel?: string;
+    businessCategory?: string;
+    owner: string;
+    creator: string;
+    lastModifier?: string;
+    validUntil?: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+
+  /** 数据集详情（含版本列表） */
+  type DatasetDetail = Dataset & { versions: DatasetVersion[] };
+
+  /** 版本数据预览 */
+  type DatasetPreview = {
+    data: Record<string, any>[];
+    columns: string[];
+    total: number;
+    success: boolean;
+    message?: string;
+  };
+
   /** 上传记录 */
   type UploadRecord = {
     id: string;

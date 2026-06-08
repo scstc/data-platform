@@ -222,3 +222,35 @@ export async function aiQa(body: { question: string }, options?: { [key: string]
     ...(options || {}),
   });
 }
+
+/** 数据集列表 GET /api/v1/datasets */
+export async function listDatasets(
+  params?: { current?: number; pageSize?: number },
+  options?: { [key: string]: any },
+) {
+  return request<DataPlatform.PageResult<DataPlatform.Dataset>>('/api/v1/datasets', {
+    method: 'GET',
+    params: { ...params },
+    ...(options || {}),
+  });
+}
+
+/** 数据集详情（含版本） GET /api/v1/datasets/{id} */
+export async function getDataset(id: string, options?: { [key: string]: any }) {
+  return request<{ data: DataPlatform.DatasetDetail; success: boolean }>(
+    `/api/v1/datasets/${id}`,
+    { method: 'GET', ...(options || {}) },
+  );
+}
+
+/** 版本数据预览 GET /api/v1/dataset-versions/{versionId}/preview */
+export async function previewDatasetVersion(
+  versionId: string,
+  params?: { limit?: number; offset?: number },
+  options?: { [key: string]: any },
+) {
+  return request<DataPlatform.DatasetPreview>(
+    `/api/v1/dataset-versions/${versionId}/preview`,
+    { method: 'GET', params: { ...params }, ...(options || {}) },
+  );
+}
