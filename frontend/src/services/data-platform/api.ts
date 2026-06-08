@@ -73,6 +73,20 @@ export async function testDataSource(
   });
 }
 
+/** 列出数据源库内的表 GET /api/v1/datasources/{id}/tables（仅 PostgreSQL） */
+export async function listDatasourceTables(
+  id: string,
+  options?: { [key: string]: any },
+) {
+  return request<{ data: string[]; success: boolean }>(
+    `/api/v1/datasources/${id}/tables`,
+    {
+      method: 'GET',
+      ...(options || {}),
+    },
+  );
+}
+
 /** 获取采集任务列表 GET /api/v1/ingest-tasks */
 export async function listIngestTasks(
   params?: DataPlatform.IngestTaskListParams,

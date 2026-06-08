@@ -37,6 +37,22 @@ declare namespace DataPlatform {
     cron?: string;
   };
 
+  /** 采集对象（拉什么）：勾选的表（每张表一数据集）或 自定义 SQL */
+  type IngestExtract = {
+    mode: 'table' | 'sql';
+    tables?: string[];
+    sql?: string;
+  };
+
+  /** 采集产物概要（详情接口返回） */
+  type IngestOutput = {
+    datasetId: string;
+    datasetName: string;
+    versionId: string;
+    versionNo: number;
+    rows?: number;
+  };
+
   /** 采集任务 */
   type IngestTask = {
     id: string;
@@ -44,11 +60,13 @@ declare namespace DataPlatform {
     datasourceId: string;
     datasourceName: string;
     schedule: IngestSchedule;
+    extract?: IngestExtract;
     status: 'pending' | 'running' | 'success' | 'failed';
     progress: number;
     createdAt: string;
     lastRunAt?: string;
     logs?: string[];
+    output?: IngestOutput[];
   };
 
   /** 上传记录 */
@@ -149,6 +167,7 @@ declare namespace DataPlatform {
     name: string;
     datasourceId: string;
     schedule: IngestSchedule;
+    extract?: IngestExtract;
   };
 
   /** 单个上传记录响应 */

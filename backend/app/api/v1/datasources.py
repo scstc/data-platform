@@ -31,6 +31,7 @@ from app.schemas import (
     TestConnectionResult,
 )
 from app.schemas.common import CamelModel
+from app.services.ingest_runner import IngestError, list_tables
 
 router = APIRouter(tags=["datasources"])
 
@@ -213,3 +214,24 @@ async def test_connection(body: TestConnectionParams) -> TestConnectionResult:
             else "连接失败：必要的连接配置缺失，请检查并补全后重试"
         )
     return TestConnectionResult(success=ok, latency_ms=latency_ms, message=message)
+
+
+@router.get("/datasources/{ds_id}/tables")
+async def list_datasource_tables(ds_id: str, session: SessionDep) -> JSONResponse:
+    """列出数据源库内的表(供采集任务勾选)。当前仅支持 PostgreSQL。"""
+    ds = await session.get(DataSource, ds_id)
+    if ds is None:
+        return _not_found()
+    if not (ds.type == "database" and ds.db_kind == "postgresql"):
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "message": "列表仅支持 PostgreSQL 数据源"},
+        )
+    try:
+        tables = await list_tables(ds.config or {})
+    except IngestError as exc:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "message": f"获取表失败:{exc}"},
+        )
+    return JSONResponse(content={"data": tables, "success": True})

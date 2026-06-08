@@ -24,6 +24,8 @@ class IngestTask(Base):
     datasource_name: Mapped[str] = mapped_column(String, nullable=False)
     # 调度配置：{mode:'once'|'cron', cron?:str}
     schedule: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    # 采集对象（extract spec）：{mode:'table', table} 或 {mode:'sql', sql}；可空
+    extract: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     # 状态：pending | running | success | failed
     status: Mapped[str] = mapped_column(String, nullable=False)
     progress: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

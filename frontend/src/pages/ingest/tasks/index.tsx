@@ -27,6 +27,7 @@ import {
   deleteIngestTask,
   getIngestTask,
   listDataSources,
+  listDatasourceTables,
   listIngestTasks,
   rerunIngestTask,
   stopIngestTask,
@@ -55,6 +56,10 @@ const IngestTasksPage: React.FC = () => {
   const actionRef = useRef<ActionType | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [currentRow, setCurrentRow] = useState<DataPlatform.IngestTask>();
+  // 数据源 id → 数据源（用于按所选数据源类型条件渲染"采集对象"）
+  const [dsMap, setDsMap] = useState<Record<string, DataPlatform.DataSource>>(
+    {},
+  );
 
   /** 打开详情 Drawer：拉取最新单任务（running 会被推进） */
   const openDetail = async (id: string) => {
@@ -278,6 +283,9 @@ const IngestTasksPage: React.FC = () => {
               rules={[{ required: true, message: '请选择数据源' }]}
               request={async () => {
                 const res = await listDataSources({ pageSize: 100 });
+                setDsMap(
+                  Object.fromEntries(res.data.map((d) => [d.id, d])),
+                );
                 return res.data.map((d) => ({
                   label: `${d.name}（${d.type}${d.dbKind ? `/${d.dbKind}` : ''}）`,
                   value: d.id,
@@ -305,12 +313,63 @@ const IngestTasksPage: React.FC = () => {
                 ) : null
               }
             </ProFormDependency>
-            <ProFormTextArea
-              name="filter"
-              label="过滤条件"
-              placeholder="可选，填写采集的过滤条件或说明，如 dt>=2026-01-01"
-              fieldProps={{ rows: 3 }}
-            />
+            <ProFormDependency name={[['datasourceId']]}>
+              {({ datasourceId }) => {
+                const ds = dsMap[datasourceId];
+                if (ds?.type !== 'database') return null;
+                return (
+                  <>
+                    <ProFormRadio.Group
+                      name={['extract', 'mode']}
+                      label="采集对象"
+                      tooltip="拉什么数据。真实拉取当前支持 PostgreSQL 数据源"
+                      options={[
+                        { label: '整张表', value: 'table' },
+                        { label: '自定义 SQL', value: 'sql' },
+                      ]}
+                    />
+                    <ProFormDependency name={[['extract', 'mode']]}>
+                      {({ extract }) =>
+                        extract?.mode === 'sql' ? (
+                          <ProFormTextArea
+                            name={['extract', 'sql']}
+                            label="SQL"
+                            placeholder="如 SELECT * FROM your_table"
+                            fieldProps={{ rows: 3 }}
+                            rules={[{ required: true, message: '请输入 SQL' }]}
+                          />
+                        ) : extract?.mode === 'table' ? (
+                          <ProFormSelect
+                            name={['extract', 'tables']}
+                            label="选择表"
+                            mode="multiple"
+                            placeholder="选择一张或多张表（每张表各产一个数据集）"
+                            rules={[
+                              { required: true, message: '请至少选择一张表' },
+                            ]}
+                            params={{ datasourceId }}
+                            request={async () => {
+                              if (!datasourceId) return [];
+                              try {
+                                const res =
+                                  await listDatasourceTables(datasourceId);
+                                return (res.data ?? []).map((t) => ({
+                                  label: t,
+                                  value: t,
+                                }));
+                              } catch {
+                                return [];
+                              }
+                            }}
+                            fieldProps={{ showSearch: true }}
+                          />
+                        ) : null
+                      }
+                    </ProFormDependency>
+                  </>
+                );
+              }}
+            </ProFormDependency>
           </ModalForm>,
         ]}
       />
@@ -336,6 +395,26 @@ const IngestTasksPage: React.FC = () => {
                   title: '调度',
                   dataIndex: 'schedule',
                   render: (_, record) => renderSchedule(record.schedule),
+                },
+                {
+                  title: '采集对象',
+                  dataIndex: 'extract',
+                  render: (_, record) =>
+                    record.extract ? (
+                      record.extract.mode === 'sql' ? (
+                        <Typography.Text code>
+                          {record.extract.sql}
+                        </Typography.Text>
+                      ) : (
+                        <span>
+                          {(record.extract.tables ?? []).map((t) => (
+                            <Tag key={t}>{t}</Tag>
+                          ))}
+                        </span>
+                      )
+                    ) : (
+                      '-'
+                    ),
                 },
                 {
                   title: '状态',
@@ -364,6 +443,22 @@ const IngestTasksPage: React.FC = () => {
                     record.lastRunAt
                       ? dayjs(record.lastRunAt).format('YYYY-MM-DD HH:mm:ss')
                       : '-',
+                },
+                {
+                  title: '产物数据集',
+                  dataIndex: 'output',
+                  render: (_, record) =>
+                    record.output && record.output.length > 0 ? (
+                      <Timeline
+                        items={record.output.map((o) => ({
+                          key: o.versionId,
+                          color: 'green',
+                          children: `${o.datasetName}（${o.rows ?? '-'} 行 · ${o.datasetId} v${o.versionNo}）`,
+                        }))}
+                      />
+                    ) : (
+                      '-'
+                    ),
                 },
               ]}
             />

@@ -23,10 +23,13 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_session
+from app.models.dataset import Dataset
+from app.models.dataset_version import DatasetVersion
 from app.models.datasource import DataSource
 from app.models.ingest_task import IngestTask
 from app.schemas.common import CamelModel, PageResponse
 from app.schemas.ingest_task import IngestTaskCreate, IngestTaskRead
+from app.services.ingest_runner import IngestError, run_pg_ingest
 
 router = APIRouter(tags=["ingest-tasks"])
 
@@ -61,11 +64,33 @@ def _not_found() -> JSONResponse:
     )
 
 
-def _item(task: IngestTask) -> dict:
-    """把 ORM 任务序列化为 camelCase 单对象响应体。"""
-    return IngestTaskItemResponse(data=IngestTaskRead.model_validate(task)).model_dump(
-        by_alias=True, mode="json"
+def _item(task: IngestTask, output: list[dict] | None = None) -> dict:
+    """把 ORM 任务序列化为 camelCase 单对象响应体（output 仅详情接口填充）。"""
+    read = IngestTaskRead.model_validate(task)
+    if output:
+        read.output = output
+    return IngestTaskItemResponse(data=read).model_dump(by_alias=True, mode="json")
+
+
+async def _build_output(session: AsyncSession, task_id: str) -> list[dict]:
+    """查该任务的全部产物数据集（按 produced_by_job_id 反查，可能多个）。"""
+    stmt = (
+        select(DatasetVersion, Dataset)
+        .join(Dataset, Dataset.id == DatasetVersion.dataset_id)
+        .where(DatasetVersion.produced_by_job_id == task_id)
+        .order_by(DatasetVersion.created_at)
     )
+    rows = (await session.execute(stmt)).all()
+    return [
+        {
+            "datasetId": dataset.id,
+            "datasetName": dataset.name,
+            "versionId": version.id,
+            "versionNo": version.version_no,
+            "rows": version.rows,
+        }
+        for version, dataset in rows
+    ]
 
 
 @router.get("/ingest-tasks", response_model=PageResponse[IngestTaskRead])
@@ -112,6 +137,7 @@ async def create_ingest_task(
         datasource_id=payload.datasource_id,
         datasource_name=datasource.name,
         schedule=payload.schedule.model_dump(),
+        extract=payload.extract.model_dump() if payload.extract else None,
         status="pending",
         progress=0,
         logs=["[INFO] 任务已创建"],
@@ -141,7 +167,8 @@ async def get_ingest_task(
             task.logs = [*task.logs, "[INFO] 任务完成"]
         await session.commit()
         await session.refresh(task)
-    return JSONResponse(content=_item(task))
+    output = await _build_output(session, task.id)
+    return JSONResponse(content=_item(task, output))
 
 
 @router.post("/ingest-tasks/{task_id}/rerun")
@@ -149,15 +176,48 @@ async def rerun_ingest_task(
     task_id: str,
     session: SessionDep,
 ) -> Response:
-    """重跑：重置为 running、progress=0、刷新 last_run_at 并追加日志。"""
+    """运行/重跑任务。
+
+    PostgreSQL 数据源 + 已配采集对象 → 真实拉取并落地为 DatasetVersion(同步执行);
+    其余数据源 → 维持原模拟进度(真实连接器见 §三A)。
+    """
     task = await session.get(IngestTask, task_id)
     if task is None:
         return _not_found()
 
-    task.status = "running"
+    datasource = await session.get(DataSource, task.datasource_id)
+    is_pg = (
+        datasource is not None
+        and datasource.type == "database"
+        and datasource.db_kind == "postgresql"
+    )
+
     task.progress = 0
     task.last_run_at = _now()
-    task.logs = [*task.logs, "[INFO] 任务重跑，进度重置为 0"]
+
+    if is_pg and task.extract:
+        task.status = "running"
+        task.logs = [*task.logs, "[INFO] 开始采集(PostgreSQL 真实拉取)"]
+        await session.commit()
+        try:
+            results = await run_pg_ingest(session, task, datasource)
+            total_rows = sum(v.rows or 0 for _, v in results)
+            task.status = "success"
+            task.progress = PROGRESS_DONE
+            task.logs = [
+                *task.logs,
+                f"[INFO] 采集 {len(results)} 项,共 {total_rows} 条 → 产出 "
+                f"{len(results)} 个数据集:"
+                + "、".join(f"{ds.name}({v.rows or 0}行)" for ds, v in results),
+                "[INFO] 任务完成",
+            ]
+        except IngestError as exc:
+            task.status = "failed"
+            task.logs = [*task.logs, f"[ERROR] 采集失败:{exc}"]
+    else:
+        task.status = "running"
+        task.logs = [*task.logs, "[INFO] 任务重跑，进度重置为 0"]
+
     await session.commit()
     await session.refresh(task)
     return JSONResponse(content=_item(task))

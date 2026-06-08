@@ -76,26 +76,26 @@ def normalize_to_records(content: bytes, fmt: str) -> list[dict]:
         raise ParseError(str(exc)) from exc
 
 
-async def land_upload(
+async def land_records(
     session: AsyncSession,
+    records: list[dict],
     *,
-    content: bytes,
-    filename: str,
-    source_format: str,
-    dataset_name: str | None = None,
+    dataset_name: str,
     data_type: str | None = None,
     description: str | None = None,
+    note: str | None = None,
+    produced_by_job_id: str | None = None,
     creator: str = "admin",
 ) -> tuple[Dataset, DatasetVersion]:
-    """本地上传连接器:规范化 → 写 jsonl → 建 Dataset(v1) + DatasetVersion。
+    """统一落地出口:把规范化记录写 jsonl → 建 Dataset(v1) + DatasetVersion。
 
-    任何 DB 写入之前先完成解析,解析失败不留脏对象(会话关闭即回滚)。
+    所有连接器(上传 / 采集 / ...)最终都汇到这里。`produced_by_job_id` 记录
+    产出者(上传为空;采集传任务 id),即血缘上游。非 JSON 原生类型(datetime/
+    Decimal 等)经 `default=str` 兜底为字符串。
     """
-    records = normalize_to_records(content, source_format)
-
     dataset = Dataset(
         id=_new_dataset_id(),
-        name=dataset_name or Path(filename).stem or "未命名数据集",
+        name=dataset_name or "未命名数据集",
         description=description,
         data_type=data_type,
         owner=creator,
@@ -108,7 +108,7 @@ async def land_upload(
     out_path = out_dir / "data.jsonl"
     with out_path.open("w", encoding="utf-8") as fp:
         for rec in records:
-            fp.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            fp.write(json.dumps(rec, ensure_ascii=False, default=str) + "\n")
 
     version = DatasetVersion(
         id=_new_version_id(),
@@ -119,10 +119,35 @@ async def land_upload(
         rows=len(records),
         size=out_path.stat().st_size,
         origin="managed",
-        note=f"本地上传落地:{filename}",
+        produced_by_job_id=produced_by_job_id,
+        note=note,
     )
     session.add(version)
     await session.commit()
     await session.refresh(dataset)
     await session.refresh(version)
     return dataset, version
+
+
+async def land_upload(
+    session: AsyncSession,
+    *,
+    content: bytes,
+    filename: str,
+    source_format: str,
+    dataset_name: str | None = None,
+    data_type: str | None = None,
+    description: str | None = None,
+    creator: str = "admin",
+) -> tuple[Dataset, DatasetVersion]:
+    """本地上传连接器:规范化 → 落地。解析失败抛 LandingError,不留脏对象。"""
+    records = normalize_to_records(content, source_format)
+    return await land_records(
+        session,
+        records,
+        dataset_name=dataset_name or Path(filename).stem or "未命名数据集",
+        data_type=data_type,
+        description=description,
+        note=f"本地上传落地:{filename}",
+        creator=creator,
+    )
