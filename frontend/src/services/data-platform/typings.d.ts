@@ -7,6 +7,7 @@ declare namespace DataPlatform {
 
   /** 数据库类型（当 DataSourceType 为 database 时使用） */
   type DbKind =
+    | 'postgresql'
     | 'dameng'
     | 'goldendb'
     | 'kingbase'

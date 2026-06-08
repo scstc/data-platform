@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import secrets
 from random import randint
+from time import perf_counter
 from typing import Annotated, Any
 
+import asyncpg
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
@@ -60,17 +62,37 @@ def _new_id() -> str:
     return f"ds-{secrets.token_hex(3)}"
 
 
+async def _probe_postgres(config: dict[str, Any] | None) -> tuple[bool, int, str]:
+    """真实探测 PostgreSQL:建连 + SELECT 1 + 量真实往返延迟。
+
+    返回 (是否成功, 延迟毫秒, 文案);失败时延迟取 0,文案带原因。
+    连接失败可能是网络/认证/超时等多种原因,统一兜底为"连接失败"。
+    """
+    config = config or {}
+    start = perf_counter()
+    try:
+        conn = await asyncpg.connect(
+            host=config.get("host"),
+            port=int(config.get("port") or 5432),
+            database=config.get("database"),
+            user=config.get("username"),
+            password=config.get("password"),
+            timeout=5,
+        )
+        try:
+            await conn.fetchval("SELECT 1")
+        finally:
+            await conn.close()
+    except Exception as exc:  # noqa: BLE001 探测失败统一上报为连接失败
+        return False, 0, f"连接失败:{exc}"
+    latency_ms = int((perf_counter() - start) * 1000)
+    return True, latency_ms, f"连接成功,往返延迟 {latency_ms}ms"
+
+
 class _SingleDataSource(CamelModel):
     """单个数据源响应：{data:{...}, success:true}。"""
 
     data: DataSourceRead
-    success: bool = True
-
-
-class _TestConnectionResponse(CamelModel):
-    """测试连接响应：{data:{success,latencyMs,message}, success:true}。"""
-
-    data: TestConnectionResult
     success: bool = True
 
 
@@ -118,8 +140,12 @@ async def create_datasource(
     body: DataSourceCreate,
     session: SessionDep,
 ) -> _SingleDataSource:
-    """新建数据源：config 必填齐全→connected，否则→pending。"""
-    status = "connected" if _config_is_valid(body.type, body.config) else "pending"
+    """新建数据源：postgresql 真连定状态，其余按 config 必填齐全→connected/pending。"""
+    if body.type == "database" and body.db_kind == "postgresql":
+        ok, _, _ = await _probe_postgres(body.config)
+        status = "connected" if ok else "failed"
+    else:
+        status = "connected" if _config_is_valid(body.type, body.config) else "pending"
     item = DataSource(
         id=_new_id(),
         name=body.name,
@@ -170,16 +196,20 @@ async def delete_datasource(
     return JSONResponse(content={"success": True})
 
 
-@router.post("/datasources/test", response_model=_TestConnectionResponse)
-async def test_connection(body: TestConnectionParams) -> _TestConnectionResponse:
-    """测试连接：按必填字段校验，latencyMs 取 20-200 随机。"""
-    ok = _config_is_valid(body.type, body.config)
-    latency_ms = randint(20, 200)
-    message = (
-        f"连接成功，往返延迟 {latency_ms}ms"
-        if ok
-        else "连接失败：必要的连接配置缺失，请检查并补全后重试"
-    )
-    return _TestConnectionResponse(
-        data=TestConnectionResult(success=ok, latency_ms=latency_ms, message=message)
-    )
+@router.post("/datasources/test", response_model=TestConnectionResult)
+async def test_connection(body: TestConnectionParams) -> TestConnectionResult:
+    """测试连接：postgresql 真连(SELECT 1 量真实延迟)，其余按必填字段校验。
+
+    返回 bare {success, latencyMs, message}（与 mock/前端契约一致，不套 data 信封）。
+    """
+    if body.type == "database" and body.db_kind == "postgresql":
+        ok, latency_ms, message = await _probe_postgres(body.config)
+    else:
+        ok = _config_is_valid(body.type, body.config)
+        latency_ms = randint(20, 200)
+        message = (
+            f"连接成功，往返延迟 {latency_ms}ms"
+            if ok
+            else "连接失败：必要的连接配置缺失，请检查并补全后重试"
+        )
+    return TestConnectionResult(success=ok, latency_ms=latency_ms, message=message)

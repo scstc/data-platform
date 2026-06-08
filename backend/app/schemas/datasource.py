@@ -9,6 +9,7 @@ from app.schemas.common import CamelModel
 
 DataSourceType = Literal["s3", "hdfs", "database", "api"]
 DbKind = Literal[
+    "postgresql",
     "dameng",
     "goldendb",
     "kingbase",

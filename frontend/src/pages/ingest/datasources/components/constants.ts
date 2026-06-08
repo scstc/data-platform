@@ -13,6 +13,7 @@ export const TYPE_META: Record<
 
 /** 数据库品牌 → 中文名 */
 export const DB_KIND_LABEL: Record<DataPlatform.DbKind, string> = {
+  postgresql: 'PostgreSQL',
   dameng: '达梦 DM',
   goldendb: 'GoldenDB',
   kingbase: '人大金仓 KingbaseES',
