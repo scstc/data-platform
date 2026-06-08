@@ -93,15 +93,15 @@ const IngestTasksPage: React.FC = () => {
 
   /** 重跑任务 */
   const handleRerun = async (id: string) => {
-    const hide = message.loading('正在重跑…', 0);
+    const hide = message.loading('正在运行…', 0);
     try {
       await rerunIngestTask(id);
       hide();
-      message.success('任务已重新启动');
+      message.success('任务已启动');
       actionRef.current?.reload();
     } catch {
       hide();
-      message.error('重跑失败，请重试');
+      message.error('运行失败，请重试');
     }
   };
 
@@ -212,7 +212,7 @@ const IngestTasksPage: React.FC = () => {
           </Popconfirm>
         ) : (
           <a key="rerun" onClick={() => handleRerun(record.id)}>
-            重跑
+            运行
           </a>
         ),
         <Popconfirm
