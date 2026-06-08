@@ -12,5 +12,6 @@
 | `data-engineering/` | LLM 数据工程知识库(零基础向,9 篇,基于深度调研+事实核验,2026-06-04) |
 | `specs/2026-06-04-frontend-design.md` | 前端项目设计文档(Ant Design Pro v6,平台壳+数据接入,已批准) |
 | `specs/2026-06-04-backend-design.md` | 后端项目设计文档(FastAPI+PostgreSQL,实现前端契约,已批准) |
+| `plan/` | 实现规划:从现状到满足 20 项需求的任务清单(todolist)与里程碑建议 |
 
 > 新增文档时,请在上表登记,保持索引最新。

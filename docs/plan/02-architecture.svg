@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1000" font-family="Noto Sans CJK SC, PingFang SC, sans-serif">
+<defs>
+<filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#1e293b" flood-opacity="0.10"/></filter>
+<filter id="softsm" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="1.5" stdDeviation="3" flood-color="#1e293b" flood-opacity="0.10"/></filter>
+<linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#818cf8"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+<linearGradient id="gV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+<linearGradient id="gE" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#10b981"/></linearGradient>
+<linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+<marker id="mMain" markerWidth="10" markerHeight="10" refX="7" refY="3.6" orient="auto"><path d="M0,0 L8,3.6 L0,7.2 Z" fill="#475569"/></marker>
+<marker id="mUp" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#94a3b8"/></marker>
+<marker id="mRay" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+<marker id="mPg" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#10b981"/></marker>
+</defs>
+<rect width="1200" height="1000" fill="#ffffff"/>
+<text x="600.0" y="46" font-size="25" fill="#0f172a" text-anchor="middle" font-weight="bold">ai-data-platform 架构 · 前端 → 后端 → data-juicer</text>
+<text x="600.0" y="73" font-size="14" fill="#64748b" text-anchor="middle">前端不直调 DJ;后端编排,子进程跑引擎(单机 np / 大数据集可切 Ray)</text>
+<rect x="300" y="96" width="844" height="90" rx="20" fill="#f7f8fc" stroke="#e2e8f0" stroke-width="1.2"/>
+<rect x="320" y="114" width="30" height="30" rx="8" fill="url(#gB)" filter="url(#softsm)"/>
+<text x="335" y="135" font-size="15" fill="#fff" text-anchor="middle" font-weight="bold">1</text>
+<text x="362" y="128" font-size="14.5" fill="#0f172a" font-weight="bold">前端层</text>
+<rect x="504.48" y="116" width="300" height="54" rx="12" fill="#eef2ff" filter="url(#soft)"/>
+<rect x="504.48" y="116" width="300" height="54" rx="12" fill="#eef2ff" stroke="#e9edf4" stroke-width="1.1"/>
+<rect x="504.48" y="125" width="4" height="36" rx="2" fill="#6366f1"/>
+<text x="654.48" y="140.0" font-size="14" fill="#3730a3" text-anchor="middle" font-weight="bold">Ant Design Pro v6  ( :8001 )</text>
+<text x="654.48" y="159.0" font-size="11" fill="#5b56c9" text-anchor="middle">ProTable / 表单 · 轮询 job 状态</text>
+<rect x="300" y="214" width="844" height="200" rx="20" fill="#f9f8fd" stroke="#e2e8f0" stroke-width="1.2"/>
+<rect x="320" y="232" width="30" height="30" rx="8" fill="url(#gV)" filter="url(#softsm)"/>
+<text x="335" y="253" font-size="15" fill="#fff" text-anchor="middle" font-weight="bold">2</text>
+<text x="362" y="246" font-size="14.5" fill="#0f172a" font-weight="bold">后端 · FastAPI 编排层</text>
+<text x="362" y="262" font-size="10.5" fill="#64748b">( :18003 ) · 只做编排,不直接跑算子</text>
+<rect x="328.0" y="276" width="248" height="58" rx="12" fill="#fff" filter="url(#soft)"/>
+<rect x="328.0" y="276" width="248" height="58" rx="12" fill="#fff" stroke="#e9edf4" stroke-width="1.1"/>
+<rect x="328.0" y="285" width="4" height="40" rx="2" fill="#8b5cf6"/>
+<text x="452.0" y="302.0" font-size="13.5" fill="#0f172a" text-anchor="middle" font-weight="bold">job 状态机</text>
+<text x="452.0" y="321.0" font-size="10.5" fill="#64748b" text-anchor="middle">pending→running→done</text>
+<rect x="598.0" y="276" width="248" height="58" rx="12" fill="#fff" filter="url(#soft)"/>
+<rect x="598.0" y="276" width="248" height="58" rx="12" fill="#fff" stroke="#e9edf4" stroke-width="1.1"/>
+<rect x="598.0" y="285" width="4" height="40" rx="2" fill="#8b5cf6"/>
+<text x="722.0" y="302.0" font-size="13.5" fill="#0f172a" text-anchor="middle" font-weight="bold">YAML 配置生成器</text>
+<text x="722.0" y="321.0" font-size="10.5" fill="#64748b" text-anchor="middle">算子编排 → job.yaml</text>
+<rect x="868.0" y="276" width="248" height="58" rx="12" fill="#fff" filter="url(#soft)"/>
+<rect x="868.0" y="276" width="248" height="58" rx="12" fill="#fff" stroke="#e9edf4" stroke-width="1.1"/>
+<rect x="868.0" y="285" width="4" height="40" rx="2" fill="#8b5cf6"/>
+<text x="992.0" y="302.0" font-size="13.5" fill="#0f172a" text-anchor="middle" font-weight="bold">算子目录服务</text>
+<text x="992.0" y="321.0" font-size="10.5" fill="#64748b" text-anchor="middle">算子清单 + 参数 schema</text>
+<rect x="494.48" y="344" width="320" height="52" rx="12" fill="#f5f3ff" filter="url(#soft)"/>
+<rect x="494.48" y="344" width="320" height="52" rx="12" fill="#f5f3ff" stroke="#e9edf4" stroke-width="1.1"/>
+<rect x="494.48" y="353" width="4" height="34" rx="2" fill="#7c3aed"/>
+<text x="654.48" y="367.0" font-size="13" fill="#5b21b6" text-anchor="middle" font-weight="bold">asyncio 子进程池 · 信号量限并发 N</text>
+<text x="654.48" y="386.0" font-size="10.5" fill="#7c3aed" text-anchor="middle">起 dj-process 子进程,轮询产物拿进度</text>
+<rect x="300" y="438" width="844" height="210" rx="20" fill="#f6fcfa" stroke="#e2e8f0" stroke-width="1.2"/>
+<rect x="320" y="456" width="30" height="30" rx="8" fill="url(#gE)" filter="url(#softsm)"/>
+<text x="335" y="477" font-size="15" fill="#fff" text-anchor="middle" font-weight="bold">3</text>
+<text x="362" y="470" font-size="14.5" fill="#0f172a" font-weight="bold">执行内核 · data-juicer</text>
+<text x="362" y="486" font-size="10.5" fill="#64748b">单 job 内并行:DJ 原生(单机 np 多进程 / 大数据集切 Ray)</text>
+<rect x="509.48" y="520" width="290" height="84" rx="12" fill="#ecfdf5" filter="url(#soft)"/>
+<rect x="509.48" y="520" width="290" height="84" rx="12" fill="#ecfdf5" stroke="#e9edf4" stroke-width="1.1"/>
+<rect x="509.48" y="529" width="4" height="66" rx="2" fill="#10b981"/>
+<text x="654.48" y="559.0" font-size="14" fill="#065f46" text-anchor="middle" font-weight="bold">dj-process --config job.yaml</text>
+<text x="654.48" y="578.0" font-size="11" fill="#0c8a63" text-anchor="middle">单机 np = num_proc 多进程</text>
+<rect x="822" y="504" width="300" height="120" rx="14" fill="#fffdf7" stroke="#f59e0b" stroke-width="1.4" stroke-dasharray="6,5"/>
+<rect x="829.0" y="491" width="286" height="24" rx="12" fill="#fff7ea" stroke="#f59e0b" stroke-width="1"/>
+<text x="972.0" y="508" font-size="11" fill="#92400e" text-anchor="middle" font-weight="bold">Ray 集群 · executor_type: ray(大数据集)</text>
+<rect x="840" y="534" width="120" height="68" rx="12" fill="#fff7ea" filter="url(#soft)"/>
+<rect x="840" y="534" width="120" height="68" rx="12" fill="#fff7ea" stroke="#e9edf4" stroke-width="1.1"/>
+<rect x="840" y="543" width="4" height="50" rx="2" fill="#f59e0b"/>
+<text x="900.0" y="565.0" font-size="13.5" fill="#92400e" text-anchor="middle" font-weight="bold">ray-head</text>
+<text x="900.0" y="584.0" font-size="11" fill="#b45309" text-anchor="middle">调度</text>
+<rect x="990" y="534" width="114" height="30" rx="12" fill="#fff7ea" filter="url(#soft)"/>
+<rect x="990" y="534" width="114" height="30" rx="12" fill="#fff7ea" stroke="#e9edf4" stroke-width="1.1"/>
+<rect x="990" y="543" width="4" height="12" rx="2" fill="#f59e0b"/>
+<text x="1047.0" y="553.0" font-size="12.5" fill="#92400e" text-anchor="middle" font-weight="bold">ray-worker</text>
+<rect x="990" y="572" width="114" height="30" rx="12" fill="#fff7ea" filter="url(#soft)"/>
+<rect x="990" y="572" width="114" height="30" rx="12" fill="#fff7ea" stroke="#e9edf4" stroke-width="1.1"/>
+<rect x="990" y="581" width="4" height="12" rx="2" fill="#f59e0b"/>
+<text x="1047.0" y="591.0" font-size="11.5" fill="#92400e" text-anchor="middle" font-weight="bold">ray-worker … 可扩</text>
+<path d="M960,568.0 L971,568.0" fill="none" stroke="#f59e0b" stroke-width="1.6"/>
+<path d="M971,549 L971,587" fill="none" stroke="#f59e0b" stroke-width="1.6"/>
+<path d="M971,549 L987,549" fill="none" stroke="#f59e0b" stroke-width="1.6" marker-end="url(#mRay)"/>
+<path d="M971,587 L987,587" fill="none" stroke="#f59e0b" stroke-width="1.6" marker-end="url(#mRay)"/>
+<path d="M799.48,568.0 L819,568.0" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="6,5" marker-end="url(#mRay)"/>
+<rect x="772.74" y="555.0" width="76" height="20" rx="10" fill="#fff" stroke="#f59e0b" stroke-width="1"/>
+<text x="810.74" y="569.0" font-size="10.5" fill="#b45309" text-anchor="middle" font-weight="bold">切 Ray</text>
+<rect x="300" y="672" width="844" height="122" rx="20" fill="#fbfaf6" stroke="#e2e8f0" stroke-width="1.2"/>
+<rect x="320" y="690" width="30" height="30" rx="8" fill="url(#gA)" filter="url(#softsm)"/>
+<text x="335" y="711" font-size="15" fill="#fff" text-anchor="middle" font-weight="bold">4</text>
+<text x="362" y="704" font-size="14.5" fill="#0f172a" font-weight="bold">存储 / 产物</text>
+<rect x="494.48" y="716" width="320" height="56" rx="12" fill="#f0fdf4" filter="url(#soft)"/>
+<rect x="494.48" y="716" width="320" height="56" rx="12" fill="#f0fdf4" stroke="#e9edf4" stroke-width="1.1"/>
+<rect x="494.48" y="725" width="4" height="38" rx="2" fill="#10b981"/>
+<text x="654.48" y="741.0" font-size="13" fill="#065f46" text-anchor="middle" font-weight="bold">outputs/&lt;job_id&gt;/</text>
+<text x="654.48" y="760.0" font-size="11" fill="#0c8a63" text-anchor="middle">processed.jsonl · *_stats.jsonl · logs/</text>
+<g filter="url(#softsm)">
+<path d="M858.48,714 L858.48,758 A76,8 0 0 0 1010.48,758 L1010.48,714" fill="#eef2ff" stroke="#6366f1" stroke-width="1.4"/>
+<ellipse cx="934.48" cy="714" rx="76" ry="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.4"/>
+</g>
+<text x="934.48" y="738" font-size="12" fill="#3730a3" text-anchor="middle" font-weight="bold">PostgreSQL ( :55433 )</text>
+<text x="934.48" y="754" font-size="10" fill="#4f46e5" text-anchor="middle">job / 数据集 / 元数据</text>
+<path d="M814.48,744.0 L855.48,744.0" fill="none" stroke="#10b981" stroke-width="1.6" stroke-dasharray="4,4" marker-end="url(#mPg)"/>
+<rect x="810.48" y="733.0" width="52" height="20" rx="10" fill="#fff" stroke="#10b981" stroke-width="1"/>
+<text x="836.48" y="747.0" font-size="10.5" fill="#047857" text-anchor="middle" font-weight="bold">元数据</text>
+<path d="M654.48,170 L654.48,344" fill="none" stroke="#475569" stroke-width="2.6" marker-end="url(#mMain)"/>
+<rect x="592.48" y="246.0" width="124" height="20" rx="10" fill="#fff" stroke="#cbd5e1" stroke-width="1"/>
+<text x="654.48" y="260.0" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="bold">REST 下发配置</text>
+<path d="M654.48,396 L654.48,520" fill="none" stroke="#475569" stroke-width="2.6" marker-end="url(#mMain)"/>
+<rect x="622.48" y="447.0" width="64" height="20" rx="10" fill="#fff" stroke="#cbd5e1" stroke-width="1"/>
+<text x="654.48" y="461.0" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="bold">起子进程</text>
+<path d="M654.48,604 L654.48,716" fill="none" stroke="#475569" stroke-width="2.6" marker-end="url(#mMain)"/>
+<rect x="598.48" y="649.0" width="112" height="20" rx="10" fill="#fff" stroke="#cbd5e1" stroke-width="1"/>
+<text x="654.48" y="663.0" font-size="10.5" fill="#334155" text-anchor="middle" font-weight="bold">写产物 / 日志</text>
+<path d="M668.48,514 L706.48,514 L706.48,406 L705.6800000000001,406 L705.6800000000001,396" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="4,4" marker-end="url(#mUp)"/>
+<text x="714.48" y="462.0" font-size="10" fill="#64748b" text-anchor="start">回收/进度</text>
+<text x="56" y="206" font-size="13" fill="#0f172a" font-weight="bold">「高并发」分两个维度</text>
+<rect x="56" y="214" width="220" height="150" rx="14" fill="#f0fdf9" stroke="#10b981" stroke-width="1.3"/>
+<path d="M56,228 A14,14 0 0 1 70,214 L262,214 A14,14 0 0 1 276,228 L276,240 L56,240 Z" fill="#10b981"/>
+<text x="70" y="232" font-size="11.5" fill="#fff" font-weight="bold">维度 A</text>
+<text x="70" y="260" font-size="12.5" fill="#0f172a" font-weight="bold">单 job 内并行(DJ 原生)</text>
+<text x="70" y="280" font-size="10.5" fill="#475569">单机:np = num_proc 多进程</text>
+<text x="70" y="298" font-size="10.5" fill="#475569">  按 GPU/内存/核数自动定</text>
+<text x="70" y="316" font-size="10.5" fill="#475569">分布式:executor_type: ray</text>
+<text x="70" y="334" font-size="10.5" fill="#475569">  YAML 改一行切 Ray 集群</text>
+<text x="70" y="352" font-size="10.5" fill="#475569">规模:70B 样本/6400 核/2h</text>
+<rect x="56" y="380" width="220" height="150" rx="14" fill="#faf8ff" stroke="#8b5cf6" stroke-width="1.3"/>
+<path d="M56,394 A14,14 0 0 1 70,380 L262,380 A14,14 0 0 1 276,394 L276,406 L56,406 Z" fill="#8b5cf6"/>
+<text x="70" y="398" font-size="11.5" fill="#fff" font-weight="bold">维度 B</text>
+<text x="70" y="426" font-size="12.5" fill="#0f172a" font-weight="bold">多 job 并发(后端职责)</text>
+<text x="70" y="446" font-size="10.5" fill="#475569">DJ 不带队列/调度/worker 池</text>
+<text x="70" y="464" font-size="10.5" fill="#475569">演示版:asyncio + 信号量限 N</text>
+<text x="70" y="482" font-size="10.5" fill="#475569">生产版:Celery/Arq + worker 池</text>
+<text x="70" y="500" font-size="10.5" fill="#475569">  (K8s)横向扩副本</text>
+<text x="70" y="518" font-size="10.5" fill="#475569">uvicorn --workers 仅放大 API</text>
+<rect x="56" y="818" width="1088" height="74" rx="14" fill="#fcfcfd" stroke="#e2e8f0" stroke-width="1"/>
+<text x="80" y="845" font-size="12.5" fill="#475569" font-weight="bold">图例</text>
+<line x1="134" y1="841" x2="164" y2="841" stroke="#475569" stroke-width="2.6" stroke-linecap="round"/>
+<text x="172" y="845" font-size="10.5" fill="#334155">主干数据流(下行)</text>
+<line x1="303.5" y1="841" x2="333.5" y2="841" stroke="#94a3b8" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="5,4"/>
+<text x="341.5" y="845" font-size="10.5" fill="#334155">回收 / 进度(上行)</text>
+<line x1="496.0" y1="841" x2="526.0" y2="841" stroke="#f59e0b" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="5,4"/>
+<text x="534.0" y="845" font-size="10.5" fill="#334155">切 Ray(可选扩展)</text>
+<line x1="688.5" y1="841" x2="718.5" y2="841" stroke="#10b981" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="5,4"/>
+<text x="726.5" y="845" font-size="10.5" fill="#334155">写元数据(PG)</text>
+<text x="80" y="874" font-size="10.5" fill="#64748b">前端→后端(:18003 编排)→子进程跑 dj-process(单机 np;大数据集切 Ray)→产物落 outputs + 元数据落 PG。job 执行与 API 进程物理分离。</text>
+</svg>
