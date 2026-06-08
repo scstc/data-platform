@@ -5,10 +5,22 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import type { TableColumnsType } from 'antd';
-import { Drawer, Empty, Spin, Table, Tag, Typography } from 'antd';
+import {
+  Button,
+  Drawer,
+  Empty,
+  message,
+  Popconfirm,
+  Spin,
+  Table,
+  Tag,
+  Typography,
+} from 'antd';
 import dayjs from 'dayjs';
 import { useRef, useState } from 'react';
 import {
+  batchDeleteDatasets,
+  deleteDataset,
   getDataset,
   listDatasets,
   previewDatasetVersion,
@@ -37,6 +49,23 @@ const DatasetsList: React.FC = () => {
   const [activeVersion, setActiveVersion] = useState<string>();
   const [preview, setPreview] = useState<DataPlatform.DatasetPreview>();
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+
+  const handleBatchDelete = async () => {
+    const hide = message.loading('正在批量删除…', 0);
+    try {
+      const res = await batchDeleteDatasets(selectedRowKeys);
+      hide();
+      message.success(
+        `已删除 ${res?.data?.deleted ?? selectedRowKeys.length} 个数据集`,
+      );
+      setSelectedRowKeys([]);
+      actionRef.current?.reload();
+    } catch {
+      hide();
+      message.error('批量删除失败，请重试');
+    }
+  };
 
   const loadPreview = async (versionId: string) => {
     setActiveVersion(versionId);
@@ -58,6 +87,19 @@ const DatasetsList: React.FC = () => {
       setPreview(undefined);
       setActiveVersion(undefined);
       if (latest) await loadPreview(latest.id);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const hide = message.loading('正在删除…', 0);
+    try {
+      await deleteDataset(id);
+      hide();
+      message.success('删除成功');
+      actionRef.current?.reload();
+    } catch {
+      hide();
+      message.error('删除失败，请重试');
     }
   };
 
@@ -89,6 +131,26 @@ const DatasetsList: React.FC = () => {
       dataIndex: 'createdAt',
       search: false,
       render: (_, r) => dayjs(r.createdAt).format('YYYY-MM-DD HH:mm:ss'),
+    },
+    {
+      title: '操作',
+      valueType: 'option',
+      key: 'option',
+      render: (_, record) => [
+        <a key="detail" onClick={() => openDetail(record.id)}>
+          详情
+        </a>,
+        <Popconfirm
+          key="delete"
+          title="确认删除该数据集？"
+          description="将删除其全部版本与产物文件，不可恢复。"
+          okText="删除"
+          okButtonProps={{ danger: true }}
+          onConfirm={() => handleDelete(record.id)}
+        >
+          <a style={{ color: 'var(--ant-color-error, #ff4d4f)' }}>删除</a>
+        </Popconfirm>,
+      ],
     },
   ];
 
@@ -134,6 +196,23 @@ const DatasetsList: React.FC = () => {
         rowKey="id"
         search={false}
         options={{ reload: true }}
+        rowSelection={{
+          selectedRowKeys,
+          onChange: (keys) => setSelectedRowKeys(keys as string[]),
+        }}
+        tableAlertOptionRender={() => (
+          <Popconfirm
+            title={`确认删除选中的 ${selectedRowKeys.length} 个数据集？`}
+            description="将删除其全部版本与产物文件，不可恢复。"
+            okText="删除"
+            okButtonProps={{ danger: true }}
+            onConfirm={handleBatchDelete}
+          >
+            <Button type="link" danger>
+              批量删除
+            </Button>
+          </Popconfirm>
+        )}
         request={async (params) => {
           const res = await listDatasets({
             current: params.current,

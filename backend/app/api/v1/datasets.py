@@ -3,17 +3,20 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from fastapi.responses import JSONResponse
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.db import get_session
 from app.models.dataset import Dataset
 from app.models.dataset_version import DatasetVersion
+from app.models.job_input import JobInput
 from app.schemas.common import CamelModel, PageResponse
 from app.schemas.dataset import DatasetDetailRead, DatasetRead, DatasetVersionRead
 from app.services.landing import LandingError, UnsupportedFormatError, land_upload
@@ -130,6 +133,69 @@ async def get_dataset(dataset_id: str, session: SessionDep) -> JSONResponse:
     ).all()
     payload = DatasetResult(data=_to_detail(dataset, list(versions)))
     return JSONResponse(content=payload.model_dump(by_alias=True, mode="json"))
+
+
+async def _purge_dataset(session: AsyncSession, dataset_id: str) -> bool:
+    """暂存删除一个数据集(版本 + 血缘边 + 元数据),不 commit;返回是否命中。"""
+    dataset = await session.get(Dataset, dataset_id)
+    if dataset is None:
+        return False
+    version_ids = (
+        await session.scalars(
+            select(DatasetVersion.id).where(
+                DatasetVersion.dataset_id == dataset_id
+            )
+        )
+    ).all()
+    if version_ids:
+        await session.execute(
+            delete(JobInput).where(JobInput.dataset_version_id.in_(version_ids))
+        )
+    await session.execute(
+        delete(DatasetVersion).where(DatasetVersion.dataset_id == dataset_id)
+    )
+    await session.delete(dataset)
+    return True
+
+
+def _rmdir(dataset_id: str) -> None:
+    """删磁盘产物目录(不存在则忽略)。"""
+    shutil.rmtree(Path(settings.datasets_dir) / dataset_id, ignore_errors=True)
+
+
+class BatchDeleteRequest(CamelModel):
+    """批量删除入参。"""
+
+    ids: list[str]
+
+
+@router.delete("/datasets/{dataset_id}")
+async def delete_dataset(dataset_id: str, session: SessionDep) -> JSONResponse:
+    """删除数据集:级联删版本 + 清血缘边(job_inputs)+ 删磁盘产物。"""
+    if not await _purge_dataset(session, dataset_id):
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "message": "数据集不存在"},
+        )
+    await session.commit()
+    _rmdir(dataset_id)
+    return JSONResponse(content={"success": True})
+
+
+@router.post("/datasets/batch-delete")
+async def batch_delete_datasets(
+    body: BatchDeleteRequest, session: SessionDep
+) -> JSONResponse:
+    """批量删除数据集,返回实际删除数量。"""
+    deleted = [
+        ds_id for ds_id in body.ids if await _purge_dataset(session, ds_id)
+    ]
+    await session.commit()
+    for ds_id in deleted:
+        _rmdir(ds_id)
+    return JSONResponse(
+        content={"data": {"deleted": len(deleted)}, "success": True}
+    )
 
 
 @router.get("/dataset-versions/{version_id}/preview")

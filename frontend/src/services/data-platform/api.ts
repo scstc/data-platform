@@ -255,6 +255,30 @@ export async function getDataset(id: string, options?: { [key: string]: any }) {
   );
 }
 
+/** 删除数据集 DELETE /api/v1/datasets/{id} */
+export async function deleteDataset(id: string, options?: { [key: string]: any }) {
+  return request<{ success: boolean }>(`/api/v1/datasets/${id}`, {
+    method: 'DELETE',
+    ...(options || {}),
+  });
+}
+
+/** 批量删除数据集 POST /api/v1/datasets/batch-delete */
+export async function batchDeleteDatasets(
+  ids: string[],
+  options?: { [key: string]: any },
+) {
+  return request<{ data: { deleted: number }; success: boolean }>(
+    '/api/v1/datasets/batch-delete',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: { ids },
+      ...(options || {}),
+    },
+  );
+}
+
 /** 版本数据预览 GET /api/v1/dataset-versions/{versionId}/preview */
 export async function previewDatasetVersion(
   versionId: string,
