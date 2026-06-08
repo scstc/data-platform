@@ -33,6 +33,7 @@ from app.schemas.ingest_task import (
     IngestRunRead,
     IngestTaskCreate,
     IngestTaskRead,
+    IngestTaskUpdate,
 )
 from app.services.ingest_runner import IngestError, run_pg_ingest
 
@@ -153,6 +154,38 @@ async def create_ingest_task(
         logs=["[INFO] 任务已创建"],
     )
     session.add(task)
+    await session.commit()
+    await session.refresh(task)
+    return JSONResponse(content=_item(task))
+
+
+@router.put("/ingest-tasks/{task_id}")
+async def update_ingest_task(
+    task_id: str,
+    body: IngestTaskUpdate,
+    session: SessionDep,
+) -> Response:
+    """编辑采集任务:仅更新显式传入的字段(名称/数据源/调度/采集对象)。"""
+    task = await session.get(IngestTask, task_id)
+    if task is None:
+        return _not_found()
+
+    if body.name is not None:
+        task.name = body.name
+    if body.schedule is not None:
+        task.schedule = body.schedule.model_dump()
+    if body.extract is not None:
+        task.extract = body.extract.model_dump()
+    if body.datasource_id is not None and body.datasource_id != task.datasource_id:
+        datasource = await session.get(DataSource, body.datasource_id)
+        if datasource is None:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "数据源不存在"},
+            )
+        task.datasource_id = body.datasource_id
+        task.datasource_name = datasource.name
+
     await session.commit()
     await session.refresh(task)
     return JSONResponse(content=_item(task))

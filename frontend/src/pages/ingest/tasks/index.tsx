@@ -33,6 +33,7 @@ import {
   listIngestTasks,
   rerunIngestTask,
   stopIngestTask,
+  updateIngestTask,
 } from '@/services/data-platform';
 
 /** 状态 → 中文标签与 Tag 颜色 */
@@ -63,6 +64,7 @@ const IngestTasksPage: React.FC = () => {
     {},
   );
   const [runs, setRuns] = useState<DataPlatform.IngestRun[]>([]);
+  const [editRow, setEditRow] = useState<DataPlatform.IngestTask>();
 
   /** 打开详情 Drawer：拉取最新单任务（running 会被推进）+ 运行记录 */
   const openDetail = async (id: string) => {
@@ -118,6 +120,109 @@ const IngestTasksPage: React.FC = () => {
       message.error('删除失败，请重试');
     }
   };
+
+  // 建任务 / 编辑任务共用的表单字段
+  const taskFormFields = (
+    <>
+      <ProFormText
+        name="name"
+        label="任务名"
+        placeholder="请输入任务名称"
+        rules={[{ required: true, message: '请输入任务名称' }]}
+      />
+      <ProFormSelect
+        name="datasourceId"
+        label="数据源"
+        placeholder="请选择数据源"
+        rules={[{ required: true, message: '请选择数据源' }]}
+        request={async () => {
+          const res = await listDataSources({ pageSize: 100 });
+          setDsMap(Object.fromEntries(res.data.map((d) => [d.id, d])));
+          return res.data.map((d) => ({
+            label: `${d.name}（${d.type}${d.dbKind ? `/${d.dbKind}` : ''}）`,
+            value: d.id,
+          }));
+        }}
+      />
+      <ProFormRadio.Group
+        name={['schedule', 'mode']}
+        label="调度方式"
+        rules={[{ required: true, message: '请选择调度方式' }]}
+        options={[
+          { label: '单次', value: 'once' },
+          { label: 'Cron 周期', value: 'cron' },
+        ]}
+      />
+      <ProFormDependency name={[['schedule', 'mode']]}>
+        {({ schedule }) =>
+          schedule?.mode === 'cron' ? (
+            <ProFormText
+              name={['schedule', 'cron']}
+              label="Cron 表达式"
+              placeholder="如 0 2 * * *（每天凌晨 2 点，分 时 日 月 周）"
+              rules={[{ required: true, message: '请输入 cron 表达式' }]}
+            />
+          ) : null
+        }
+      </ProFormDependency>
+      <ProFormDependency name={[['datasourceId']]}>
+        {({ datasourceId }) => {
+          const ds = dsMap[datasourceId];
+          if (ds?.type !== 'database') return null;
+          return (
+            <>
+              <ProFormRadio.Group
+                name={['extract', 'mode']}
+                label="采集对象"
+                tooltip="拉什么数据。真实拉取当前支持 PostgreSQL 数据源"
+                options={[
+                  { label: '整张表', value: 'table' },
+                  { label: '自定义 SQL', value: 'sql' },
+                ]}
+              />
+              <ProFormDependency name={[['extract', 'mode']]}>
+                {({ extract }) =>
+                  extract?.mode === 'sql' ? (
+                    <ProFormTextArea
+                      name={['extract', 'sql']}
+                      label="SQL"
+                      placeholder="如 SELECT * FROM your_table"
+                      fieldProps={{ rows: 3 }}
+                      rules={[{ required: true, message: '请输入 SQL' }]}
+                    />
+                  ) : extract?.mode === 'table' ? (
+                    <ProFormSelect
+                      name={['extract', 'tables']}
+                      label="选择表"
+                      mode="multiple"
+                      placeholder="选择一张或多张表（每张表各产一个数据集）"
+                      rules={[
+                        { required: true, message: '请至少选择一张表' },
+                      ]}
+                      params={{ datasourceId }}
+                      request={async () => {
+                        if (!datasourceId) return [];
+                        try {
+                          const res = await listDatasourceTables(datasourceId);
+                          return (res.data ?? []).map((t) => ({
+                            label: t,
+                            value: t,
+                          }));
+                        } catch {
+                          return [];
+                        }
+                      }}
+                      fieldProps={{ showSearch: true }}
+                    />
+                  ) : null
+                }
+              </ProFormDependency>
+            </>
+          );
+        }}
+      </ProFormDependency>
+    </>
+  );
 
   const columns: ProColumns<DataPlatform.IngestTask>[] = [
     {
@@ -201,6 +306,9 @@ const IngestTasksPage: React.FC = () => {
       render: (_, record) => [
         <a key="detail" onClick={() => openDetail(record.id)}>
           详情
+        </a>,
+        <a key="edit" onClick={() => setEditRow(record)}>
+          编辑
         </a>,
         record.status === 'running' ? (
           <Popconfirm
@@ -292,109 +400,45 @@ const IngestTasksPage: React.FC = () => {
               }
             }}
           >
-            <ProFormText
-              name="name"
-              label="任务名"
-              placeholder="请输入任务名称"
-              rules={[{ required: true, message: '请输入任务名称' }]}
-            />
-            <ProFormSelect
-              name="datasourceId"
-              label="数据源"
-              placeholder="请选择数据源"
-              rules={[{ required: true, message: '请选择数据源' }]}
-              request={async () => {
-                const res = await listDataSources({ pageSize: 100 });
-                setDsMap(
-                  Object.fromEntries(res.data.map((d) => [d.id, d])),
-                );
-                return res.data.map((d) => ({
-                  label: `${d.name}（${d.type}${d.dbKind ? `/${d.dbKind}` : ''}）`,
-                  value: d.id,
-                }));
-              }}
-            />
-            <ProFormRadio.Group
-              name={['schedule', 'mode']}
-              label="调度方式"
-              rules={[{ required: true, message: '请选择调度方式' }]}
-              options={[
-                { label: '单次', value: 'once' },
-                { label: 'Cron 周期', value: 'cron' },
-              ]}
-            />
-            <ProFormDependency name={[['schedule', 'mode']]}>
-              {({ schedule }) =>
-                schedule?.mode === 'cron' ? (
-                  <ProFormText
-                    name={['schedule', 'cron']}
-                    label="Cron 表达式"
-                    placeholder="如 0 2 * * *（每天凌晨 2 点，分 时 日 月 周）"
-                    rules={[{ required: true, message: '请输入 cron 表达式' }]}
-                  />
-                ) : null
-              }
-            </ProFormDependency>
-            <ProFormDependency name={[['datasourceId']]}>
-              {({ datasourceId }) => {
-                const ds = dsMap[datasourceId];
-                if (ds?.type !== 'database') return null;
-                return (
-                  <>
-                    <ProFormRadio.Group
-                      name={['extract', 'mode']}
-                      label="采集对象"
-                      tooltip="拉什么数据。真实拉取当前支持 PostgreSQL 数据源"
-                      options={[
-                        { label: '整张表', value: 'table' },
-                        { label: '自定义 SQL', value: 'sql' },
-                      ]}
-                    />
-                    <ProFormDependency name={[['extract', 'mode']]}>
-                      {({ extract }) =>
-                        extract?.mode === 'sql' ? (
-                          <ProFormTextArea
-                            name={['extract', 'sql']}
-                            label="SQL"
-                            placeholder="如 SELECT * FROM your_table"
-                            fieldProps={{ rows: 3 }}
-                            rules={[{ required: true, message: '请输入 SQL' }]}
-                          />
-                        ) : extract?.mode === 'table' ? (
-                          <ProFormSelect
-                            name={['extract', 'tables']}
-                            label="选择表"
-                            mode="multiple"
-                            placeholder="选择一张或多张表（每张表各产一个数据集）"
-                            rules={[
-                              { required: true, message: '请至少选择一张表' },
-                            ]}
-                            params={{ datasourceId }}
-                            request={async () => {
-                              if (!datasourceId) return [];
-                              try {
-                                const res =
-                                  await listDatasourceTables(datasourceId);
-                                return (res.data ?? []).map((t) => ({
-                                  label: t,
-                                  value: t,
-                                }));
-                              } catch {
-                                return [];
-                              }
-                            }}
-                            fieldProps={{ showSearch: true }}
-                          />
-                        ) : null
-                      }
-                    </ProFormDependency>
-                  </>
-                );
-              }}
-            </ProFormDependency>
+            {taskFormFields}
           </ModalForm>,
         ]}
       />
+
+      <ModalForm<DataPlatform.IngestTaskCreate>
+        title="编辑采集任务"
+        width={520}
+        open={!!editRow}
+        modalProps={{ destroyOnHidden: true }}
+        onOpenChange={(v) => {
+          if (!v) setEditRow(undefined);
+        }}
+        initialValues={
+          editRow
+            ? {
+                name: editRow.name,
+                datasourceId: editRow.datasourceId,
+                schedule: editRow.schedule,
+                extract: editRow.extract,
+              }
+            : undefined
+        }
+        onFinish={async (values) => {
+          if (!editRow) return false;
+          try {
+            await updateIngestTask(editRow.id, values);
+            message.success('已保存');
+            setEditRow(undefined);
+            actionRef.current?.reload();
+            return true;
+          } catch {
+            message.error('保存失败，请重试');
+            return false;
+          }
+        }}
+      >
+        {taskFormFields}
+      </ModalForm>
 
       <Drawer
         width={560}

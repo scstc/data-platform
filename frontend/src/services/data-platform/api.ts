@@ -138,6 +138,23 @@ export async function rerunIngestTask(id: string, options?: { [key: string]: any
   );
 }
 
+/** 编辑采集任务 PUT /api/v1/ingest-tasks/:id */
+export async function updateIngestTask(
+  id: string,
+  body: Partial<DataPlatform.IngestTaskCreate>,
+  options?: { [key: string]: any },
+) {
+  return request<{ data: DataPlatform.IngestTask; success: boolean }>(
+    `/api/v1/ingest-tasks/${id}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+      ...(options || {}),
+    },
+  );
+}
+
 /** 采集任务运行记录 GET /api/v1/ingest-tasks/:id/runs */
 export async function listIngestRuns(
   id: string,
@@ -233,6 +250,17 @@ export async function aiQa(body: { question: string }, options?: { [key: string]
     data: body,
     ...(options || {}),
   });
+}
+
+/** 上传文件并落地为数据集 POST /api/v1/datasets/upload */
+export async function uploadDataset(
+  formData: FormData,
+  options?: { [key: string]: any },
+) {
+  return request<{ data: DataPlatform.DatasetDetail; success: boolean }>(
+    '/api/v1/datasets/upload',
+    { method: 'POST', data: formData, ...(options || {}) },
+  );
 }
 
 /** 数据集列表 GET /api/v1/datasets */

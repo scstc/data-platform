@@ -69,3 +69,12 @@ class IngestTaskCreate(CamelModel):
     datasource_id: str
     schedule: IngestSchedule
     extract: IngestExtract | None = None
+
+
+class IngestTaskUpdate(CamelModel):
+    """编辑采集任务入参:全部可选,仅更新显式传入的字段。"""
+
+    name: str | None = None
+    datasource_id: str | None = None
+    schedule: IngestSchedule | None = None
+    extract: IngestExtract | None = None
