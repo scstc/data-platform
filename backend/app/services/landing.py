@@ -13,14 +13,39 @@ import json
 import secrets
 from pathlib import Path
 
+import openpyxl
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.dataset import Dataset
 from app.models.dataset_version import DatasetVersion
 
-# 当前可直接落地的源格式;PDF/PPT/DOC/Office/HTML 的文档解析留到 #3
-LANDABLE_FORMATS = {"jsonl", "json", "csv", "tsv", "txt"}
+# 文档类:用 markitdown 提取文本,按段落落地
+DOC_FORMATS = {"pdf", "doc", "docx", "ppt", "pptx", "html"}
+# 可直接落地的源格式(覆盖需求 #3 列出的全部常见格式)
+LANDABLE_FORMATS = {
+    "jsonl",
+    "json",
+    "csv",
+    "tsv",
+    "txt",
+    "xlsx",
+    "xls",
+    *DOC_FORMATS,
+}
+
+# markitdown 实例(懒加载,首次处理文档时才初始化,避免拖慢后端启动)
+_markitdown = None
+
+
+def _get_markitdown():  # noqa: ANN202
+    """懒加载并缓存 MarkItDown 实例。"""
+    global _markitdown
+    if _markitdown is None:
+        from markitdown import MarkItDown
+
+        _markitdown = MarkItDown()
+    return _markitdown
 
 
 class LandingError(ValueError):
@@ -45,6 +70,73 @@ def _new_version_id() -> str:
     return f"dsv-{secrets.token_hex(3)}"
 
 
+def _xlsx_to_records(content: bytes) -> list[dict]:
+    """xlsx → 记录列表:首行为表头,其余每行一条(空行跳过)。"""
+    try:
+        wb = openpyxl.load_workbook(
+            io.BytesIO(content), read_only=True, data_only=True
+        )
+    except Exception as exc:  # noqa: BLE001 解析失败统一上报
+        raise ParseError(f"xlsx 解析失败:{exc}") from exc
+    ws = wb.active
+    rows = ws.iter_rows(values_only=True) if ws is not None else iter(())
+    try:
+        header = next(rows)
+    except StopIteration:
+        wb.close()
+        return []
+    columns = [
+        str(h) if h is not None else f"col{i}" for i, h in enumerate(header)
+    ]
+    records: list[dict] = []
+    for row in rows:
+        if all(cell is None for cell in row):
+            continue
+        records.append(dict(zip(columns, row, strict=False)))
+    wb.close()
+    return records
+
+
+def _xls_to_records(content: bytes) -> list[dict]:
+    """xls(旧版 Excel)→ 记录列表,用 xlrd 逐行读。"""
+    import xlrd
+
+    try:
+        book = xlrd.open_workbook(file_contents=content)
+    except Exception as exc:  # noqa: BLE001 解析失败统一上报
+        raise ParseError(f"xls 解析失败:{exc}") from exc
+    sheet = book.sheet_by_index(0)
+    if sheet.nrows == 0:
+        return []
+    header = sheet.row_values(0)
+    columns = [
+        str(h) if h not in (None, "") else f"col{i}"
+        for i, h in enumerate(header)
+    ]
+    records: list[dict] = []
+    for r in range(1, sheet.nrows):
+        row = sheet.row_values(r)
+        if all(c in (None, "") for c in row):
+            continue
+        records.append(dict(zip(columns, row, strict=False)))
+    return records
+
+
+def _doc_to_records(content: bytes, ext: str) -> list[dict]:
+    """文档(pdf/doc/docx/ppt/pptx/html)→ markitdown 提取文本 → 按段落每段一条。"""
+    try:
+        result = _get_markitdown().convert_stream(
+            io.BytesIO(content), file_extension=f".{ext}"
+        )
+    except Exception as exc:  # noqa: BLE001 解析失败统一上报
+        raise ParseError(f"{ext} 解析失败:{exc}") from exc
+    text = (result.text_content or "").strip()
+    if not text:
+        return []
+    paras = [p.strip() for p in text.split("\n\n") if p.strip()]
+    return [{"text": p} for p in paras] if paras else [{"text": text}]
+
+
 def normalize_to_records(content: bytes, fmt: str) -> list[dict]:
     """把源文件字节按格式规范化为记录列表(每条 → jsonl 一行)。
 
@@ -57,6 +149,12 @@ def normalize_to_records(content: bytes, fmt: str) -> list[dict]:
     fmt = fmt.lower()
     if fmt not in LANDABLE_FORMATS:
         raise UnsupportedFormatError(fmt)
+    if fmt == "xlsx":
+        return _xlsx_to_records(content)
+    if fmt == "xls":
+        return _xls_to_records(content)
+    if fmt in DOC_FORMATS:
+        return _doc_to_records(content, fmt)
     try:
         text = content.decode("utf-8")
         if fmt == "jsonl":

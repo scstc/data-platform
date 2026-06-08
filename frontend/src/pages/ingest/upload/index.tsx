@@ -2,13 +2,12 @@ import { InboxOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import type { UploadProps } from 'antd';
-import { message, Space, Tag, Typography, Upload } from 'antd';
+import { Alert, message, Space, Tag, Typography, Upload } from 'antd';
 import { useRef } from 'react';
-import { listUploads, uploadFile } from '@/services/data-platform';
+import { listDatasets, uploadDataset } from '@/services/data-platform';
 import {
   ACCEPT,
   ALLOWED_EXTENSIONS,
-  formatFileSize,
   isAllowedExtension,
   MAX_FILE_SIZE,
 } from './utils';
@@ -35,7 +34,7 @@ const UploadPage: React.FC = () => {
     return true;
   };
 
-  /** 用项目 request 走 /api/v1/upload，成功后刷新上传记录表 */
+  /** 上传即落地为受管数据集（POST /datasets/upload），成功后刷新数据集列表 */
   const customRequest: NonNullable<UploadProps['customRequest']> = async (
     options,
   ) => {
@@ -43,46 +42,33 @@ const UploadPage: React.FC = () => {
     const formData = new FormData();
     formData.append('file', file as File);
     try {
-      const res = await uploadFile(formData);
+      const res = await uploadDataset(formData);
       onSuccess?.(res);
-      messageApi.success(`${(file as File).name} 上传成功`);
+      messageApi.success(
+        `${(file as File).name} 已入库为数据集「${res.data.name}」，可在「数据加工」中选择它`,
+      );
       actionRef.current?.reload();
     } catch (err) {
       onError?.(err as Error);
-      messageApi.error(`${(file as File).name} 上传失败`);
+      messageApi.error(
+        `${(file as File).name} 上传失败（文件可能损坏或内容无法解析）`,
+      );
     }
   };
 
-  const columns: ProColumns<DataPlatform.UploadRecord>[] = [
+  const columns: ProColumns<DataPlatform.Dataset>[] = [
+    { title: '数据集名', dataIndex: 'name', ellipsis: true },
     {
-      title: '文件名',
-      dataIndex: 'filename',
-      ellipsis: true,
-    },
-    {
-      title: '格式',
-      dataIndex: 'format',
-      width: 100,
-      render: (_, record) => <Tag color="blue">{record.format}</Tag>,
-    },
-    {
-      title: '大小',
-      dataIndex: 'size',
+      title: '类型',
+      dataIndex: 'dataType',
       width: 120,
-      render: (_, record) => formatFileSize(record.size),
+      render: (_, r) => (r.dataType ? <Tag color="blue">{r.dataType}</Tag> : '-'),
     },
+    { title: '描述', dataIndex: 'description', ellipsis: true },
+    { title: '创建人', dataIndex: 'creator', width: 100 },
     {
-      title: '状态',
-      dataIndex: 'status',
-      width: 100,
-      valueEnum: {
-        done: { text: '成功', status: 'Success' },
-        error: { text: '失败', status: 'Error' },
-      },
-    },
-    {
-      title: '上传时间',
-      dataIndex: 'uploadedAt',
+      title: '创建时间',
+      dataIndex: 'createdAt',
       width: 180,
       valueType: 'dateTime',
     },
@@ -91,6 +77,12 @@ const UploadPage: React.FC = () => {
   return (
     <PageContainer>
       {contextHolder}
+      <Alert
+        type="info"
+        showIcon
+        style={{ marginBottom: 16 }}
+        title="上传的文件会自动成为受管数据集（v1）并进入数据集仓库；随后可在「数据加工」中选择它新建加工任务。"
+      />
       <Dragger
         name="file"
         multiple
@@ -108,7 +100,7 @@ const UploadPage: React.FC = () => {
       </Dragger>
 
       <Paragraph style={{ marginBottom: 24 }}>
-        <Text type="secondary">支持的文件格式：</Text>
+        <Text type="secondary">支持的文件格式（上传即落地为数据集）：</Text>
         <Space size={[4, 8]} wrap style={{ marginTop: 8 }}>
           {ALLOWED_EXTENSIONS.map((ext) => (
             <Tag key={ext}>.{ext}</Tag>
@@ -116,15 +108,15 @@ const UploadPage: React.FC = () => {
         </Space>
       </Paragraph>
 
-      <ProTable<DataPlatform.UploadRecord, DataPlatform.UploadListParams>
-        headerTitle="上传记录"
+      <ProTable<DataPlatform.Dataset>
+        headerTitle="数据集（上传即入库）"
         actionRef={actionRef}
         rowKey="id"
         search={false}
         columns={columns}
         request={async (params) => {
           const { current, pageSize } = params;
-          const res = await listUploads({ current, pageSize });
+          const res = await listDatasets({ current, pageSize });
           return {
             data: res.data,
             total: res.total,

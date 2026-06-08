@@ -80,8 +80,8 @@ async def upload_as_dataset(
             status_code=400,
             content={
                 "success": False,
-                "message": f"格式 .{fmt} 暂不支持直接落地"
-                "(PDF/Office/HTML 文档解析见 #3);当前支持 jsonl/json/csv/tsv/txt",
+                "message": f"格式 .{fmt} 暂不支持落地;当前支持 "
+                "jsonl/json/csv/tsv/txt/xlsx/xls/html/pdf/doc/docx/ppt/pptx",
             },
         )
     except LandingError as exc:
