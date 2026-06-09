@@ -101,6 +101,63 @@ declare namespace DataPlatform {
     params: OperatorParam[];
   };
 
+  /** 算子市场:目录项参数(data-juicer 原始参数表一行) */
+  type CatalogParam = {
+    name: string;
+    type: string;
+    default: string;
+    desc: string;
+  };
+
+  /** 算子市场:全量目录算子项 */
+  type CatalogOperator = {
+    name: string;
+    category: string;
+    summaryEn: string;
+    summaryZh: string;
+    descEn?: string;
+    descZh?: string;
+    modality: string[];
+    compute: string | null;
+    frameworks: string[];
+    stability: string | null;
+    resourceClass: 'cpu' | 'api_llm' | 'hf_model' | 'gpu' | 'vllm';
+    params: CatalogParam[];
+    example?: string | null;
+    reference?: string | null;
+    detailPage?: string | null;
+    scenarioGroup: string;
+    zhLabel: string;
+    zhUsageTip?: string;
+    runnable: 'ready' | 'needs_api' | 'needs_media' | 'needs_compute';
+    recommend: boolean;
+  };
+
+  /** 算子市场:目录查询参数 */
+  type OperatorCatalogParams = {
+    scenario?: string;
+    category?: string;
+    modality?: string;
+    resourceClass?: string;
+    runnable?: string;
+    recommend?: boolean;
+    keyword?: string;
+    current?: number;
+    pageSize?: number;
+  };
+
+  /** 算子市场:目录概览(各维度分布) */
+  type OperatorCatalogMeta = {
+    total: number;
+    withDetailPage: number;
+    recommended: number;
+    byCategory: Record<string, number>;
+    byResourceClass: Record<string, number>;
+    byModality: Record<string, number>;
+    byScenario: Record<string, number>;
+    byRunnable: Record<string, number>;
+  };
+
   /** 加工任务 */
   type Job = {
     id: string;

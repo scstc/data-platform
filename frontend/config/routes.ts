@@ -70,7 +70,22 @@ export default [
     path: '/processing',
     name: 'processing',
     icon: 'deploymentUnit',
-    component: './processing',
+    routes: [
+      {
+        path: '/processing',
+        redirect: '/processing/jobs',
+      },
+      {
+        path: '/processing/jobs',
+        name: 'jobs',
+        component: './processing',
+      },
+      {
+        path: '/processing/market',
+        name: 'market',
+        component: './processing/market',
+      },
+    ],
   },
   {
     path: '/quality',

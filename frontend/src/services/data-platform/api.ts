@@ -359,3 +359,35 @@ export async function getJob(id: string, options?: { [key: string]: any }) {
     { method: 'GET', ...(options || {}) },
   );
 }
+
+/** 算子市场:目录概览 GET /api/v1/operators/catalog/meta */
+export async function getOperatorCatalogMeta(options?: {
+  [key: string]: any;
+}) {
+  return request<{ data: DataPlatform.OperatorCatalogMeta; success: boolean }>(
+    '/api/v1/operators/catalog/meta',
+    { method: 'GET', ...(options || {}) },
+  );
+}
+
+/** 算子市场:目录查询(分面 + 分页) GET /api/v1/operators/catalog */
+export async function listOperatorCatalog(
+  params?: DataPlatform.OperatorCatalogParams,
+  options?: { [key: string]: any },
+) {
+  return request<DataPlatform.PageResult<DataPlatform.CatalogOperator>>(
+    '/api/v1/operators/catalog',
+    { method: 'GET', params: { ...params }, ...(options || {}) },
+  );
+}
+
+/** 算子市场:单算子详情 GET /api/v1/operators/{name} */
+export async function getOperatorDetail(
+  name: string,
+  options?: { [key: string]: any },
+) {
+  return request<{ data: DataPlatform.CatalogOperator; success: boolean }>(
+    `/api/v1/operators/${name}`,
+    { method: 'GET', ...(options || {}) },
+  );
+}

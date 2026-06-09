@@ -58,6 +58,8 @@ export default {
   'menu.security': 'Data Security',
   'menu.quality': 'Quality Assessment',
   'menu.processing': 'Data Processing',
+  'menu.processing.jobs': 'Processing Jobs',
+  'menu.processing.market': 'Operator Market',
   'menu.dataTasks': 'Data Tasks',
   'menu.lineage': 'Data Lineage',
   'menu.annotation': 'Data Annotation',

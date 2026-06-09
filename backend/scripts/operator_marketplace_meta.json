@@ -1,0 +1,1486 @@
+[
+ {
+  "name": "entity_attribute_aggregator",
+  "scenario_group": "聚合与分组",
+  "zh_label": "实体属性聚合",
+  "zh_usage_tip": "需从多篇文档中提炼某实体的特定属性摘要时使用，适合知识图谱构建场景。",
+  "recommend": false
+ },
+ {
+  "name": "meta_tags_aggregator",
+  "scenario_group": "聚合与分组",
+  "zh_label": "元标签聚合合并",
+  "zh_usage_tip": "将语义相近的元标签合并统一，适合对多源数据打标后的标签归一化。",
+  "recommend": false
+ },
+ {
+  "name": "most_relevant_entities_aggregator",
+  "scenario_group": "聚合与分组",
+  "zh_label": "相关实体排序",
+  "zh_usage_tip": "从文本中提取并排名与指定实体最相关的其他实体，适合关系抽取和知识图谱扩充。",
+  "recommend": false
+ },
+ {
+  "name": "nested_aggregator",
+  "scenario_group": "聚合与分组",
+  "zh_label": "嵌套内容聚合",
+  "zh_usage_tip": "将多个样本中的嵌套结构内容聚合成单一摘要，适合多轮对话或分段文本的汇总。",
+  "recommend": false
+ },
+ {
+  "name": "document_deduplicator",
+  "scenario_group": "去重",
+  "zh_label": "文档精确去重",
+  "zh_usage_tip": "对文本数据集做全文精确匹配去重，速度快、无依赖，是预训练语料清洗的首选去重步骤。",
+  "recommend": true
+ },
+ {
+  "name": "document_line_deduplicator",
+  "scenario_group": "去重",
+  "zh_label": "文档行级去重",
+  "zh_usage_tip": "跨文档去除重复行，适合爬虫语料中大量模板行、版权声明等重复片段的清理。",
+  "recommend": true
+ },
+ {
+  "name": "document_minhash_deduplicator",
+  "scenario_group": "去重",
+  "zh_label": "MinHash模糊去重",
+  "zh_usage_tip": "用MinHash LSH对近似重复文档去重，适合大规模网页/新闻语料中的近似重复清洗。",
+  "recommend": true
+ },
+ {
+  "name": "document_simhash_deduplicator",
+  "scenario_group": "去重",
+  "zh_label": "SimHash模糊去重",
+  "zh_usage_tip": "用SimHash对近似重复文档去重，计算轻量，适合中等规模文本语料的快速近似去重。",
+  "recommend": true
+ },
+ {
+  "name": "image_deduplicator",
+  "scenario_group": "去重",
+  "zh_label": "图像精确去重",
+  "zh_usage_tip": "对图文数据集中的图像做精确哈希去重，去除完全相同的图片，节省存储和训练开销。",
+  "recommend": true
+ },
+ {
+  "name": "ray_bts_minhash_deduplicator",
+  "scenario_group": "去重",
+  "zh_label": "Ray分布式MinHash去重",
+  "zh_usage_tip": "在Ray集群上运行的高性能MinHash去重，适合TB级超大规模预训练语料的分布式去重。",
+  "recommend": false
+ },
+ {
+  "name": "ray_document_deduplicator",
+  "scenario_group": "去重",
+  "zh_label": "Ray分布式文档去重",
+  "zh_usage_tip": "在Ray集群上做精确文档去重，适合需要水平扩展的大规模文本数据集批处理场景。",
+  "recommend": false
+ },
+ {
+  "name": "ray_image_deduplicator",
+  "scenario_group": "去重",
+  "zh_label": "Ray分布式图像去重",
+  "zh_usage_tip": "在Ray集群上对图像做精确去重，适合大规模多模态数据集的分布式图像清洗流水线。",
+  "recommend": false
+ },
+ {
+  "name": "ray_video_deduplicator",
+  "scenario_group": "去重",
+  "zh_label": "Ray分布式视频去重",
+  "zh_usage_tip": "在Ray集群上对视频做精确去重，适合大规模视频语料分布式处理时的重复视频剔除。",
+  "recommend": false
+ },
+ {
+  "name": "video_deduplicator",
+  "scenario_group": "去重",
+  "zh_label": "视频精确去重",
+  "zh_usage_tip": "对视频数据集做精确哈希去重，去除完全相同的视频文件，适合视频预训练数据清洗。",
+  "recommend": true
+ },
+ {
+  "name": "alphanumeric_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "字母数字比例过滤",
+  "zh_usage_tip": "过滤字母/数字占比不在指定范围内的文本，可剔除乱码、符号堆砌等低质量内容。",
+  "recommend": true
+ },
+ {
+  "name": "audio_duration_filter",
+  "scenario_group": "音频处理",
+  "zh_label": "音频时长过滤",
+  "zh_usage_tip": "保留时长在指定区间内的音频样本，过滤过短或过长的音频，适合语音训练数据准备。",
+  "recommend": true
+ },
+ {
+  "name": "audio_nmf_snr_filter",
+  "scenario_group": "音频处理",
+  "zh_label": "音频信噪比过滤",
+  "zh_usage_tip": "用NMF估算信噪比并过滤噪声过大的音频，适合提升语音识别或TTS训练数据质量。",
+  "recommend": true
+ },
+ {
+  "name": "audio_size_filter",
+  "scenario_group": "音频处理",
+  "zh_label": "音频文件大小过滤",
+  "zh_usage_tip": "按音频文件字节大小过滤样本，快速剔除空文件或异常大文件，适合数据入库前的粗筛。",
+  "recommend": true
+ },
+ {
+  "name": "average_line_length_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "平均行长度过滤",
+  "zh_usage_tip": "过滤平均行长度异常的文本，可剔除代码dump、表格乱码等非自然语言内容。",
+  "recommend": true
+ },
+ {
+  "name": "character_repetition_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "字符重复率过滤",
+  "zh_usage_tip": "过滤字符级重复率过高的文本，有效去除爬虫抓取的模板填充、广告刷屏类噪声。",
+  "recommend": true
+ },
+ {
+  "name": "flagged_words_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "标注词比例过滤",
+  "zh_usage_tip": "按词表过滤含敏感词/低质词比例超标的文本，适合预训练语料的安全与质量双重管控。",
+  "recommend": true
+ },
+ {
+  "name": "general_field_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "通用字段过滤",
+  "zh_usage_tip": "按样本任意字段的值做条件过滤，适合基于元数据字段快速筛选数据子集。",
+  "recommend": true
+ },
+ {
+  "name": "image_aesthetics_filter",
+  "scenario_group": "图像处理",
+  "zh_label": "图像美学分数过滤",
+  "zh_usage_tip": "用HF美学评分模型过滤低质量图像，适合文生图、图文对齐训练数据的质量筛选。",
+  "recommend": false
+ },
+ {
+  "name": "image_aspect_ratio_filter",
+  "scenario_group": "图像处理",
+  "zh_label": "图像宽高比过滤",
+  "zh_usage_tip": "过滤宽高比超出范围的图像，去除过于细长或宽扁的异常图片，适合视觉模型数据准备。",
+  "recommend": true
+ },
+ {
+  "name": "image_face_count_filter",
+  "scenario_group": "图像处理",
+  "zh_label": "图像人脸数量过滤",
+  "zh_usage_tip": "按人脸数量范围筛选图像，适合人脸识别、人像生成等需要控制人脸数量的训练数据场景。",
+  "recommend": false
+ },
+ {
+  "name": "image_face_ratio_filter",
+  "scenario_group": "图像处理",
+  "zh_label": "图像人脸面积比过滤",
+  "zh_usage_tip": "按人脸占图像面积比例筛选，适合肖像类数据集过滤人脸过小或遮挡严重的样本。",
+  "recommend": false
+ },
+ {
+  "name": "image_nsfw_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "图像NSFW过滤",
+  "zh_usage_tip": "用HF模型检测并过滤NSFW图像，多模态训练数据内容安全管控的必备步骤。",
+  "recommend": false
+ },
+ {
+  "name": "image_pair_similarity_filter",
+  "scenario_group": "图像处理",
+  "zh_label": "图像对相似度过滤",
+  "zh_usage_tip": "过滤两张图像相似度不达标的样本，适合图像对比/变化检测类训练数据的质量控制。",
+  "recommend": false
+ },
+ {
+  "name": "image_shape_filter",
+  "scenario_group": "图像处理",
+  "zh_label": "图像尺寸范围过滤",
+  "zh_usage_tip": "按图像宽高像素范围过滤，去除分辨率过低或过高的图片，适合统一视觉模型输入规格。",
+  "recommend": true
+ },
+ {
+  "name": "image_size_filter",
+  "scenario_group": "图像处理",
+  "zh_label": "图像文件大小过滤",
+  "zh_usage_tip": "按文件字节大小快速过滤异常图像，无需解码即可剔除空文件或超大异常图片。",
+  "recommend": true
+ },
+ {
+  "name": "image_subplot_filter",
+  "scenario_group": "图像处理",
+  "zh_label": "图像子图数量过滤",
+  "zh_usage_tip": "检测并过滤包含拼图/子图数量不符合要求的图像，适合清洗含多格拼图的图文数据集。",
+  "recommend": false
+ },
+ {
+  "name": "image_text_matching_filter",
+  "scenario_group": "多模态对齐",
+  "zh_label": "图文匹配分数过滤",
+  "zh_usage_tip": "用HF模型评估图文匹配程度并过滤低分样本，是图文预训练数据质量控制的核心算子。",
+  "recommend": false
+ },
+ {
+  "name": "image_text_similarity_filter",
+  "scenario_group": "多模态对齐",
+  "zh_label": "图文相似度过滤",
+  "zh_usage_tip": "用CLIP等模型计算图文语义相似度并过滤不对齐样本，适合图文对数据集的质量筛选。",
+  "recommend": false
+ },
+ {
+  "name": "image_watermark_filter",
+  "scenario_group": "图像处理",
+  "zh_label": "图像水印概率过滤",
+  "zh_usage_tip": "用HF模型检测图像水印并过滤含水印图片，适合清洗版权敏感的图像训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "in_context_influence_filter",
+  "scenario_group": "数据选择",
+  "zh_label": "上下文影响力过滤",
+  "zh_usage_tip": "基于In-Context Influence分数筛选对模型影响力高的样本，适合指令微调数据的主动选择。",
+  "recommend": false
+ },
+ {
+  "name": "instruction_following_difficulty_filter",
+  "scenario_group": "数据选择",
+  "zh_label": "指令难度IFD过滤",
+  "zh_usage_tip": "按IFD分数过滤指令跟随难度，保留难度适中的样本，提升SFT数据的训练效益。",
+  "recommend": false
+ },
+ {
+  "name": "language_id_score_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "语言识别置信度过滤",
+  "zh_usage_tip": "按语言检测置信度过滤，保留目标语言纯净样本，适合多语言语料的单语子集提取。",
+  "recommend": true
+ },
+ {
+  "name": "llm_analysis_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "LLM分析过滤",
+  "zh_usage_tip": "调用LLM对样本做自定义分析并按结果过滤，适合需要语义理解的复杂质量判断场景。",
+  "recommend": false
+ },
+ {
+  "name": "llm_condition_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "LLM条件判断过滤",
+  "zh_usage_tip": "让LLM按自然语言条件判断保留或丢弃样本，灵活适配各类业务规则的数据过滤需求。",
+  "recommend": false
+ },
+ {
+  "name": "llm_difficulty_score_filter",
+  "scenario_group": "数据选择",
+  "zh_label": "本地LLM难度评分过滤",
+  "zh_usage_tip": "用本地LLM计算IFD难度分数并过滤，无需API调用，适合离线SFT数据难度筛选。",
+  "recommend": false
+ },
+ {
+  "name": "llm_perplexity_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "困惑度过滤",
+  "zh_usage_tip": "用HF语言模型计算困惑度并过滤异常样本，可去除噪声文本或领域外内容。",
+  "recommend": false
+ },
+ {
+  "name": "llm_quality_score_filter",
+  "scenario_group": "数据选择",
+  "zh_label": "本地LLM质量评分过滤",
+  "zh_usage_tip": "用本地LLM对样本打质量分并过滤，离线运行，适合SFT/RLHF数据的批量质量筛选。",
+  "recommend": false
+ },
+ {
+  "name": "llm_task_relevance_filter",
+  "scenario_group": "数据选择",
+  "zh_label": "任务相关性过滤",
+  "zh_usage_tip": "按任务相关性分数过滤数据，保留与目标任务高度相关的样本，提升领域微调数据质量。",
+  "recommend": false
+ },
+ {
+  "name": "maximum_line_length_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "最大行长度过滤",
+  "zh_usage_tip": "过滤最大行长度异常的文本，可去除代码dump、日志等非自然语言内容。",
+  "recommend": true
+ },
+ {
+  "name": "perplexity_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "困惑度质量过滤",
+  "zh_usage_tip": "用n-gram语言模型计算困惑度过滤低质量文本，无需HF模型，适合大规模预训练语料粗筛。",
+  "recommend": true
+ },
+ {
+  "name": "phrase_grounding_recall_filter",
+  "scenario_group": "多模态对齐",
+  "zh_label": "短语定位召回过滤",
+  "zh_usage_tip": "过滤图文短语定位召回率低的样本，适合提升图文细粒度对齐训练数据质量。",
+  "recommend": false
+ },
+ {
+  "name": "special_characters_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "特殊字符比例过滤",
+  "zh_usage_tip": "过滤特殊符号占比过高的文本，可去除乱码、编码错误或符号刷屏类噪声。",
+  "recommend": true
+ },
+ {
+  "name": "specified_field_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "指定字段值过滤",
+  "zh_usage_tip": "按样本任意指定字段的值做条件过滤，适合基于元数据字段快速筛选数据子集。",
+  "recommend": true
+ },
+ {
+  "name": "specified_numeric_field_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "指定数值字段过滤",
+  "zh_usage_tip": "按数值字段范围过滤样本，适合按已有评分、长度、计数等数值指标筛选数据。",
+  "recommend": true
+ },
+ {
+  "name": "stopwords_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "停用词比例过滤",
+  "zh_usage_tip": "按停用词占比过滤文本，可识别并去除信息密度极低的垃圾或模板化内容。",
+  "recommend": true
+ },
+ {
+  "name": "suffix_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "文件后缀名过滤",
+  "zh_usage_tip": "按文件后缀名保留或排除特定格式的样本，适合混合格式数据集的快速粗筛。",
+  "recommend": true
+ },
+ {
+  "name": "text_action_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "文本动作词比例过滤",
+  "zh_usage_tip": "过滤动作词比例异常的文本，可筛除列表、标题等缺乏叙述性的低质量片段。",
+  "recommend": false
+ },
+ {
+  "name": "text_embd_similarity_filter",
+  "scenario_group": "数据选择",
+  "zh_label": "文本嵌入相似度过滤",
+  "zh_usage_tip": "用API计算文本与参考文本的嵌入相似度并过滤，适合按语义相关性筛选领域数据。",
+  "recommend": false
+ },
+ {
+  "name": "text_entity_dependency_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "命名实体依赖过滤",
+  "zh_usage_tip": "过滤高度依赖上下文命名实体的碎片化文本，适合去除缺失上下文的孤立段落。",
+  "recommend": false
+ },
+ {
+  "name": "text_length_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "文本长度过滤",
+  "zh_usage_tip": "按字符数范围过滤文本，是预训练/SFT数据清洗最常用的基础长度控制步骤之一。",
+  "recommend": true
+ },
+ {
+  "name": "text_pair_similarity_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "文本对相似度过滤",
+  "zh_usage_tip": "过滤文本对语义相似度不达标的样本，适合平行语料、问答对等双文本数据集的质量控制。",
+  "recommend": false
+ },
+ {
+  "name": "token_num_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "Token数量过滤",
+  "zh_usage_tip": "按tokenizer计算的token数范围过滤文本，适合控制训练样本长度分布、避免截断损失。",
+  "recommend": true
+ },
+ {
+  "name": "video_aesthetics_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "视频美学分数过滤",
+  "zh_usage_tip": "用HF模型评估视频审美质量并过滤低分样本，适合视频生成模型训练数据的质量筛选。",
+  "recommend": false
+ },
+ {
+  "name": "video_aspect_ratio_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "视频宽高比过滤",
+  "zh_usage_tip": "按宽高比范围过滤视频，去除过于极端的竖版或横版视频，适合视频模型数据规格统一。",
+  "recommend": true
+ },
+ {
+  "name": "video_duration_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "视频时长过滤",
+  "zh_usage_tip": "保留时长在指定区间的视频样本，过滤过短片段和过长视频，是视频数据集的基础清洗步骤。",
+  "recommend": true
+ },
+ {
+  "name": "video_frames_text_similarity_filter",
+  "scenario_group": "多模态对齐",
+  "zh_label": "视频帧文本相似度过滤",
+  "zh_usage_tip": "过滤视频关键帧与配套文本语义相似度低的样本，适合视频-文本预训练数据的对齐质量控制。",
+  "recommend": false
+ },
+ {
+  "name": "video_motion_score_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "视频运动分数过滤",
+  "zh_usage_tip": "纯CPU计算视频运动幅度并过滤静止或抖动过剧的片段，适合视频理解训练数据初筛。",
+  "recommend": true
+ },
+ {
+  "name": "video_motion_score_ptlflow_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "ptlflow运动分数过滤",
+  "zh_usage_tip": "用ptlflow光流模型精确计算视频运动分数，适合对运动质量要求高的视频生成数据集筛选。",
+  "recommend": false
+ },
+ {
+  "name": "video_motion_score_raft_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "RAFT运动分数过滤",
+  "zh_usage_tip": "用RAFT光流算法计算视频运动分数过滤，比ptlflow更轻量，适合GPU资源有限时的运动质量筛选。",
+  "recommend": false
+ },
+ {
+  "name": "video_nsfw_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "视频NSFW内容过滤",
+  "zh_usage_tip": "用HF模型检测视频NSFW内容并过滤，视频训练数据内容安全合规的必备步骤。",
+  "recommend": false
+ },
+ {
+  "name": "video_ocr_area_ratio_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "视频OCR文字占比过滤",
+  "zh_usage_tip": "过滤视频帧中文字区域占比异常的样本，可去除字幕过多或文字遮挡严重的视频片段。",
+  "recommend": false
+ },
+ {
+  "name": "video_resolution_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "视频分辨率过滤",
+  "zh_usage_tip": "按分辨率范围过滤视频，去除低画质或超高分辨率异常视频，是视频数据集的基础规格筛选。",
+  "recommend": true
+ },
+ {
+  "name": "video_tagging_from_frames_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "视频帧标签过滤",
+  "zh_usage_tip": "用GPU模型从视频帧提取标签并过滤不匹配的视频，适合按内容类别筛选视频训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "video_watermark_filter",
+  "scenario_group": "视频处理",
+  "zh_label": "视频水印概率过滤",
+  "zh_usage_tip": "用HF模型检测并过滤含水印的视频片段，适合清洗版权敏感的视频训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "word_repetition_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "词语重复率过滤",
+  "zh_usage_tip": "过滤词级重复率异常的文本，可去除模板填充、机器生成的低质量重复内容。",
+  "recommend": true
+ },
+ {
+  "name": "words_num_filter",
+  "scenario_group": "质量过滤",
+  "zh_label": "词数范围过滤",
+  "zh_usage_tip": "按词数范围过滤文本，是预训练/SFT数据清洗最常用的基础长度控制步骤之一。",
+  "recommend": true
+ },
+ {
+  "name": "csv_formatter",
+  "scenario_group": "格式转换",
+  "zh_label": "CSV格式转换",
+  "zh_usage_tip": "将CSV文件统一转为data-juicer内部数据集格式，是处理表格类文本数据的入口。",
+  "recommend": true
+ },
+ {
+  "name": "empty_formatter",
+  "scenario_group": "格式转换",
+  "zh_label": "空数据集生成",
+  "zh_usage_tip": "生成空数据集用于流水线调试或占位，通常在测试管道时使用。",
+  "recommend": false
+ },
+ {
+  "name": "json_formatter",
+  "scenario_group": "格式转换",
+  "zh_label": "JSON/JSONL格式转换",
+  "zh_usage_tip": "将JSON或JSONL文件转为统一数据集格式，是最常用的LLM语料入口算子。",
+  "recommend": true
+ },
+ {
+  "name": "local_formatter",
+  "scenario_group": "格式转换",
+  "zh_label": "本地文件加载",
+  "zh_usage_tip": "从本地路径自动识别并加载数据集，适合本地离线数据集的快速接入。",
+  "recommend": true
+ },
+ {
+  "name": "parquet_formatter",
+  "scenario_group": "格式转换",
+  "zh_label": "Parquet格式转换",
+  "zh_usage_tip": "将Parquet文件转为统一数据集格式，适合处理HuggingFace下载的大规模列式存储语料。",
+  "recommend": true
+ },
+ {
+  "name": "remote_formatter",
+  "scenario_group": "格式转换",
+  "zh_label": "远端数据集加载",
+  "zh_usage_tip": "直接从HuggingFace Hub等远端加载数据集，适合在线拉取公开语料快速实验。",
+  "recommend": true
+ },
+ {
+  "name": "text_formatter",
+  "scenario_group": "格式转换",
+  "zh_label": "纯文本格式转换",
+  "zh_usage_tip": "将txt等纯文本文件转为统一数据集格式，适合处理网页抓取或书籍类原始语料。",
+  "recommend": true
+ },
+ {
+  "name": "tsv_formatter",
+  "scenario_group": "格式转换",
+  "zh_label": "TSV格式转换",
+  "zh_usage_tip": "将TSV文件转为统一数据集格式，适合处理制表符分隔的结构化文本语料。",
+  "recommend": false
+ },
+ {
+  "name": "key_value_grouper",
+  "scenario_group": "聚合与分组",
+  "zh_label": "键值对分组",
+  "zh_usage_tip": "按指定字段的键值对样本分组，适合将多轮对话或同主题文档聚合为组。",
+  "recommend": false
+ },
+ {
+  "name": "naive_grouper",
+  "scenario_group": "聚合与分组",
+  "zh_label": "全量简单分组",
+  "zh_usage_tip": "将所有样本归入同一组，用于需要全局聚合操作（如统计摘要）的流水线场景。",
+  "recommend": false
+ },
+ {
+  "name": "naive_reverse_grouper",
+  "scenario_group": "聚合与分组",
+  "zh_label": "分组还原拆解",
+  "zh_usage_tip": "将分组后的数据还原为独立样本，与grouper配对使用，完成聚合后的样本展开。",
+  "recommend": false
+ },
+ {
+  "name": "agent_bad_case_signal_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "智能体坏案例标记",
+  "zh_usage_tip": "对智能体轨迹中的失败/错误案例打信号标签，用于Agent训练数据的质量筛查。",
+  "recommend": false
+ },
+ {
+  "name": "agent_dialog_normalize_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "智能体对话归一化",
+  "zh_usage_tip": "将不同格式的智能体对话轨迹统一为标准格式，是Agent数据清洗流水线的前置步骤。",
+  "recommend": false
+ },
+ {
+  "name": "agent_insight_llm_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "LLM智能体洞察生成",
+  "zh_usage_tip": "调用LLM对智能体轨迹生成洞察分析，用于丰富Agent训练数据的元信息。",
+  "recommend": false
+ },
+ {
+  "name": "agent_skill_insight_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "智能体技能洞察分析",
+  "zh_usage_tip": "用LLM分析智能体轨迹中的技能调用并生成洞察，适合Agent能力评估与数据标注。",
+  "recommend": false
+ },
+ {
+  "name": "agent_tool_relevance_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "工具调用相关性评估",
+  "zh_usage_tip": "评估智能体轨迹中工具调用与任务目标的相关性，用于过滤低质量工具调用样本。",
+  "recommend": false
+ },
+ {
+  "name": "agent_tool_type_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "工具调用类型标注",
+  "zh_usage_tip": "对智能体轨迹中的工具调用类型进行分类标注，便于按工具类型分析和筛选数据。",
+  "recommend": false
+ },
+ {
+  "name": "agent_trace_coherence_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "智能体轨迹连贯性评估",
+  "zh_usage_tip": "评估智能体多步轨迹的逻辑连贯性，用于筛除推理链断裂的低质量Agent轨迹。",
+  "recommend": false
+ },
+ {
+  "name": "audio_add_gaussian_noise_mapper",
+  "scenario_group": "音频处理",
+  "zh_label": "音频高斯噪声增强",
+  "zh_usage_tip": "向音频样本添加可控高斯噪声做数据增强，提升语音模型的噪声鲁棒性。",
+  "recommend": false
+ },
+ {
+  "name": "audio_ffmpeg_wrapped_mapper",
+  "scenario_group": "音频处理",
+  "zh_label": "FFmpeg音频处理",
+  "zh_usage_tip": "用FFmpeg对音频做重采样、格式转换、剪切等处理，是音频数据预处理的通用工具。",
+  "recommend": false
+ },
+ {
+  "name": "calibrate_qa_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "LLM问答对校准",
+  "zh_usage_tip": "调用LLM对已有问答对的质量进行校准优化，适合提升SFT训练数据的准确性。",
+  "recommend": true
+ },
+ {
+  "name": "calibrate_query_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "查询语句校准优化",
+  "zh_usage_tip": "对问答数据中的查询语句做校准改写，提升指令清晰度，适合SFT数据精炼场景。",
+  "recommend": false
+ },
+ {
+  "name": "calibrate_response_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "LLM回复校准优化",
+  "zh_usage_tip": "用LLM对问答数据中的回复进行改写校准，提升SFT训练数据的准确性和流畅度。",
+  "recommend": false
+ },
+ {
+  "name": "chinese_convert_mapper",
+  "scenario_group": "中文处理",
+  "zh_label": "中繁日汉字转换",
+  "zh_usage_tip": "在简繁中文或日文汉字间互转，用于统一多源中文语料的字形风格。",
+  "recommend": true
+ },
+ {
+  "name": "clean_copyright_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "版权声明清除",
+  "zh_usage_tip": "去除文本中的版权声明行，适合清洗网页抓取或书籍类语料中的法律文本干扰。",
+  "recommend": true
+ },
+ {
+  "name": "clean_email_mapper",
+  "scenario_group": "隐私脱敏",
+  "zh_label": "邮件地址清除",
+  "zh_usage_tip": "从文本中删除电子邮件地址，是隐私合规数据处理的基础步骤。",
+  "recommend": true
+ },
+ {
+  "name": "clean_html_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "HTML标签清洗",
+  "zh_usage_tip": "去除文本中残留的HTML标签，适合处理网页抓取的原始语料。",
+  "recommend": true
+ },
+ {
+  "name": "clean_ip_mapper",
+  "scenario_group": "隐私脱敏",
+  "zh_label": "IP地址清除",
+  "zh_usage_tip": "从文本中删除IP地址，适合对含有网络日志或论坛帖子的语料做隐私脱敏。",
+  "recommend": true
+ },
+ {
+  "name": "clean_links_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "超链接清除",
+  "zh_usage_tip": "去除文本中的URL超链接，适合清洗网页/社交媒体抓取语料中的噪声链接。",
+  "recommend": true
+ },
+ {
+  "name": "detect_character_attributes_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "角色属性检测标注",
+  "zh_usage_tip": "用GPU模型检测图像中角色的外观属性，适合动漫/人物图像数据集的自动标注。",
+  "recommend": false
+ },
+ {
+  "name": "detect_character_locations_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "角色位置检测标注",
+  "zh_usage_tip": "用GPU模型定位图像中角色的空间位置，适合需要角色位置标注的视觉训练数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "detect_main_character_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "主角色检测标注",
+  "zh_usage_tip": "检测图像中的主要角色并标注，适合动漫/影视图像数据集的主体识别与清洗。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_clarification_quality_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "对话澄清质量评估",
+  "zh_usage_tip": "对多轮对话中的澄清请求质量打分，用于筛选高质量对话SFT训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_coreference_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "对话指代消解",
+  "zh_usage_tip": "处理多轮对话中的代词/指代问题，提升对话数据的自包含性和训练效果。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_error_recovery_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "对话错误恢复评估",
+  "zh_usage_tip": "评估对话中出错后的恢复能力，用于构建具备容错能力的对话训练数据集。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_intent_detection_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "LLM对话意图检测",
+  "zh_usage_tip": "用LLM对多轮对话中每轮意图进行检测标注，适合对话意图分类模型的数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_memory_consistency_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "对话记忆一致性评估",
+  "zh_usage_tip": "检查多轮对话中前后信息是否一致，过滤记忆矛盾的低质量对话样本。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_non_repetition_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "对话非重复性评估",
+  "zh_usage_tip": "评估对话回复的多样性和非重复性，筛选表达丰富的高质量对话数据。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_proactivity_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "对话主动性评估",
+  "zh_usage_tip": "评估对话中助手的主动引导能力，适合构建更具主动性的对话模型训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_sentiment_detection_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "LLM对话情感检测",
+  "zh_usage_tip": "用LLM检测多轮对话中的情感倾向，适合情感对话模型的数据标注与筛选。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_sentiment_intensity_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "LLM情感强度评估",
+  "zh_usage_tip": "用LLM评估对话中情感表达的强度，适合情感细粒度标注的对话数据集构建。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_topic_detection_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "LLM对话主题检测",
+  "zh_usage_tip": "用LLM识别多轮对话的主题类别，适合按主题分类整理大规模对话语料。",
+  "recommend": false
+ },
+ {
+  "name": "dialog_topic_shift_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "对话话题转换检测",
+  "zh_usage_tip": "检测多轮对话中的话题切换点，适合分析对话结构或切分多主题对话片段。",
+  "recommend": false
+ },
+ {
+  "name": "download_file_mapper",
+  "scenario_group": "工具与IO",
+  "zh_label": "URL文件下载",
+  "zh_usage_tip": "从指定URL批量下载文件到本地，适合数据采集管道中的原始资源获取步骤。",
+  "recommend": false
+ },
+ {
+  "name": "expand_macro_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "LaTeX宏展开",
+  "zh_usage_tip": "展开LaTeX源文件中的自定义宏，适合处理学术论文语料以提升文本可读性。",
+  "recommend": false
+ },
+ {
+  "name": "extract_entity_attribute_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "LLM实体属性抽取",
+  "zh_usage_tip": "用LLM从文本中抽取指定实体的属性字段，适合构建知识图谱或结构化训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "extract_entity_relation_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "LLM实体关系抽取",
+  "zh_usage_tip": "用LLM从文本中抽取实体间的关系三元组，适合知识图谱构建和关系抽取数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "extract_event_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "LLM事件信息抽取",
+  "zh_usage_tip": "用LLM从文本中抽取事件元素（主体/动作/时间/地点），适合构建事件图谱或时间线数据集。",
+  "recommend": false
+ },
+ {
+  "name": "extract_keyword_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "LLM关键词抽取",
+  "zh_usage_tip": "用LLM从文本中抽取关键词并添加到样本元数据，适合为语料自动打标或建索引。",
+  "recommend": false
+ },
+ {
+  "name": "extract_nickname_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "LLM昵称抽取",
+  "zh_usage_tip": "用LLM从文本中抽取实体的昵称别名，适合知识图谱和实体消歧场景的数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "extract_support_text_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "LLM支撑性文本抽取",
+  "zh_usage_tip": "用LLM抽取支撑结论的根据性文本片段，适合构建检索增强生成或阶段性推理数据集。",
+  "recommend": false
+ },
+ {
+  "name": "extract_tables_from_html_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "HTML表格抽取",
+  "zh_usage_tip": "从网页HTML中抽取结构化表格数据，适合网页爬虫语料中的表格内容清洗与提取。",
+  "recommend": true
+ },
+ {
+  "name": "fix_unicode_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "Unicode字符修复",
+  "zh_usage_tip": "修复文本中损坏或错误编码的Unicode字符，是多源网页/PDF语料清洗的基础步骤。",
+  "recommend": true
+ },
+ {
+  "name": "generate_qa_from_examples_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "示例引导生成问答对",
+  "zh_usage_tip": "基于少量示例用vLLM大批生成问答对，适合小样本上快速扩充SFT训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "generate_qa_from_text_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "文本转问答对生成",
+  "zh_usage_tip": "用vLLM从原始文本直接生成问答对，适合将无标注语料转换为SFT/RAG训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "image_blur_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "图像模糊处理",
+  "zh_usage_tip": "对图像做可控模糊增强或隐私保护，适合视觉模型数据增强与敏感区域模糊场景。",
+  "recommend": false
+ },
+ {
+  "name": "image_captioning_mapper",
+  "scenario_group": "多模态对齐",
+  "zh_label": "图像自动标题",
+  "zh_usage_tip": "用HF模型为图像生成文字描述，适合为无文本图像数据集自动构建图文对训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "image_detection_yolo_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "YOLO目标检测标注",
+  "zh_usage_tip": "用YOLO模型对图像进行目标检测并添加检测框元数据，适合目标检测训练数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "image_diffusion_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "扩散模型图像增强",
+  "zh_usage_tip": "用扩散模型对图像做风格迁移或增强变换，适合扩充图文生成模型的多样化训练图像。",
+  "recommend": false
+ },
+ {
+  "name": "image_face_blur_mapper",
+  "scenario_group": "隐私脱敏",
+  "zh_label": "人脸模糊脱敏",
+  "zh_usage_tip": "自动检测并模糊图像中的人脸区域，适合处理包含真实人物的公开图像数据集。",
+  "recommend": false
+ },
+ {
+  "name": "image_mmpose_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "人体姿态估计标注",
+  "zh_usage_tip": "用MMPose模型估计图像中人体关键点姿态，适合动作识别和身体动作分析数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "image_remove_background_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "图像背景去除",
+  "zh_usage_tip": "自动去除图像背景并保留主体，适合需要工装/商品等主体漂浮图的制图和数据增强场景。",
+  "recommend": false
+ },
+ {
+  "name": "image_sam_3d_body_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "SAM 3D人体分割",
+  "zh_usage_tip": "用SAM模型对图像中的人体做3D分割标注，适合人体升降重建或具身智能训练数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "image_segment_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "图像语义分割标注",
+  "zh_usage_tip": "用GPU模型对图像做语义分割并添加分割标注，适合自动驾驶、遥感等语义分割数据生产场景。",
+  "recommend": false
+ },
+ {
+  "name": "image_tagging_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "图像标签打标",
+  "zh_usage_tip": "用GPU模型为图像自动添加语义标签，适合无标注的图像数据集快速打标。",
+  "recommend": false
+ },
+ {
+  "name": "image_tagging_vlm_mapper",
+  "scenario_group": "多模态对齐",
+  "zh_label": "VLM图像标签生成",
+  "zh_usage_tip": "调用VLM API为图像生成详细标签描述，适合图文对齐或多模态指令微调数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "imgdiff_difference_area_generator_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "图像差异区域标注",
+  "zh_usage_tip": "生成两张图像差异区域的坐标标注，适合图像差异对比或变化检测数据集的构建。",
+  "recommend": false
+ },
+ {
+  "name": "imgdiff_difference_caption_generator_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "图像差异区域描述生成",
+  "zh_usage_tip": "为两张图像的差异区域自动生成文字描述，适合图像差异描述、变化映射类多模态数据制作。",
+  "recommend": false
+ },
+ {
+  "name": "latex_figure_context_extractor_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "LaTeX图片上下文抽取",
+  "zh_usage_tip": "从学术论文LaTeX源文件中抽取图片及其前后文字，适合构建图文对资料。",
+  "recommend": false
+ },
+ {
+  "name": "latex_merge_tex_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "LaTeX子文件合并",
+  "zh_usage_tip": "将\\input/\\include引入的LaTeX子文件内嵌成单一文档，适合处理学术论文语料的前置处理。",
+  "recommend": false
+ },
+ {
+  "name": "llm_extract_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "LLM自由信息抽取",
+  "zh_usage_tip": "用LLM按自定义要求从文本中自由抽取结构化信息，灵活适配各类抽取任务。",
+  "recommend": false
+ },
+ {
+  "name": "mllm_mapper",
+  "scenario_group": "多模态对齐",
+  "zh_label": "多模态LLM标注处理",
+  "zh_usage_tip": "用本地部署的多模态LLM对图文数据做标注和增强，适合离线多模态数据处理流水线。",
+  "recommend": false
+ },
+ {
+  "name": "nlpaug_en_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "英文文本数据增强",
+  "zh_usage_tip": "用nlpaug对英文文本做同义替换/回译等多种增强，适合扩充小规模英文SFT训练数据。",
+  "recommend": true
+ },
+ {
+  "name": "nlpcda_zh_mapper",
+  "scenario_group": "中文处理",
+  "zh_label": "中文文本数据增强",
+  "zh_usage_tip": "用nlpcda对中文文本做同义替换、随机删除等增强，适合扩充中文小样本训练数据集。",
+  "recommend": true
+ },
+ {
+  "name": "optimize_prompt_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "LLM提示词优化",
+  "zh_usage_tip": "调用LLM对指令/提示词进行改写优化，适合提升SFT训练数据中指令的清晰度和完整性。",
+  "recommend": true
+ },
+ {
+  "name": "optimize_qa_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "LLM问答对优化",
+  "zh_usage_tip": "用LLM对问答对进行整体质量优化，适合提升SFT数据中问答对的配对质量。",
+  "recommend": true
+ },
+ {
+  "name": "optimize_query_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "GPU模型查询优化",
+  "zh_usage_tip": "用本地GPU模型对查询语句进行改写优化，适合离线RAG或检索微调数据的查询质量提升。",
+  "recommend": false
+ },
+ {
+  "name": "optimize_response_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "GPU模型回复优化",
+  "zh_usage_tip": "用本地GPU模型对回复内容进行质量优化，适合离线SFT数据回复的批量改写场景。",
+  "recommend": false
+ },
+ {
+  "name": "pair_preference_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "RLHF偏好对生成",
+  "zh_usage_tip": "用LLM为同一问题生成好坏回复对，是RLHF/DPO训练数据准备的核心算子。",
+  "recommend": true
+ },
+ {
+  "name": "pii_llm_suspect_mapper",
+  "scenario_group": "隐私脱敏",
+  "zh_label": "LLM识别潜在PII",
+  "zh_usage_tip": "用LLM扫描文本中的潜在个人信息并标记，适合处理规则难以覆盖的复杂PII场景。",
+  "recommend": false
+ },
+ {
+  "name": "pii_redaction_mapper",
+  "scenario_group": "隐私脱敏",
+  "zh_label": "PII文本脱敏处理",
+  "zh_usage_tip": "对文本中识别到的姓名、电话等PII信息进行替换脱敏，是隐私合规数据清洗的常用步骤。",
+  "recommend": true
+ },
+ {
+  "name": "punctuation_normalization_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "标点符号规范化",
+  "zh_usage_tip": "将全角/异体标点符号统一规范化，适合处理多源中文网页或OCR识别等混杂标点的语料。",
+  "recommend": true
+ },
+ {
+  "name": "python_file_mapper",
+  "scenario_group": "工具与IO",
+  "zh_label": "Python脚本自定义处理",
+  "zh_usage_tip": "加载Python脚本文件对数据做自定义转换，适合将现有脚本逻辑接入数据处理流水线。",
+  "recommend": true
+ },
+ {
+  "name": "python_lambda_mapper",
+  "scenario_group": "工具与IO",
+  "zh_label": "Lambda内联自定义处理",
+  "zh_usage_tip": "通过内联lambda对数据做轻量级自定义处理，适合快速实验或简单字段变换场景。",
+  "recommend": true
+ },
+ {
+  "name": "query_intent_detection_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "HF模型查询意图检测",
+  "zh_usage_tip": "用HuggingFace模型对查询语句进行意图分类标注，适合对话系统训练数据的意图标注场景。",
+  "recommend": false
+ },
+ {
+  "name": "query_sentiment_detection_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "HF模型查询情感检测",
+  "zh_usage_tip": "用HuggingFace模型对查询语句进行情感分类标注，适合情感感知对话模型的训练数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "query_topic_detection_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "HF模型查询主题检测",
+  "zh_usage_tip": "用HuggingFace模型对查询语句进行主题分类标注，适合按主题分层整理对话训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "relation_identity_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "LLM实体关系识别",
+  "zh_usage_tip": "用LLM识别文本中实体间的关系类型并标注，适合知识图谱和关系抽取数据集构建。",
+  "recommend": false
+ },
+ {
+  "name": "remove_bibliography_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "参考文献删除",
+  "zh_usage_tip": "去除学术文本末尾的参考文献列表，适合处理论文、报告类语料的正文内容提取。",
+  "recommend": false
+ },
+ {
+  "name": "remove_comments_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "代码注释删除",
+  "zh_usage_tip": "去除代码文本中的注释内容，适合希望仿训纯代码逻辑而非注释的代码语料处理。",
+  "recommend": false
+ },
+ {
+  "name": "remove_header_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "文档页眉删除",
+  "zh_usage_tip": "去除网页或文档中的页眉/导航内容，适合清洗网页爬虫数据中的结构性干扰。",
+  "recommend": true
+ },
+ {
+  "name": "remove_long_words_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "超长单词删除",
+  "zh_usage_tip": "删除超过指定长度的单词，可去除URL残片、乱码字符串等噪声。",
+  "recommend": true
+ },
+ {
+  "name": "remove_non_chinese_character_mapper",
+  "scenario_group": "中文处理",
+  "zh_label": "非中文字符删除",
+  "zh_usage_tip": "去除中文文本中的非中文字符，适合需要纯中文语料的预训练数据清洗场景。",
+  "recommend": true
+ },
+ {
+  "name": "remove_repeat_sentences_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "重复句删除",
+  "zh_usage_tip": "删除单文档内的重复句子，适合清洗爬虫数据中内容重复粘贴的网页。",
+  "recommend": true
+ },
+ {
+  "name": "remove_specific_chars_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "指定字符删除",
+  "zh_usage_tip": "删除文本中指定的特殊字符，适合删除OCR/爬虫语料中的特定噪声字符。",
+  "recommend": true
+ },
+ {
+  "name": "remove_table_text_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "表格文本内容删除",
+  "zh_usage_tip": "删除文本中的表格块内容，适合将网页语料中结构化表格与正文分开处理。",
+  "recommend": false
+ },
+ {
+  "name": "remove_words_with_incorrect_substrings_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "错误子串单词删除",
+  "zh_usage_tip": "删除包含指定错误子串模式的单词，适合处理网页爬虫语料中的URL残片或乱码token。",
+  "recommend": true
+ },
+ {
+  "name": "replace_content_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "正则内容替换",
+  "zh_usage_tip": "用正则表达式批量替换文本中的指定内容，适合清洗模板文本、统一术语写法。",
+  "recommend": true
+ },
+ {
+  "name": "s3_download_file_mapper",
+  "scenario_group": "工具与IO",
+  "zh_label": "S3文件下载",
+  "zh_usage_tip": "从AWS S3或兼容对象存储批量下载文件，适合数据采集流水线中的云存储资源获取。",
+  "recommend": false
+ },
+ {
+  "name": "s3_upload_file_mapper",
+  "scenario_group": "工具与IO",
+  "zh_label": "S3文件上传",
+  "zh_usage_tip": "将本地文件批量上传到S3存储桶，适合处理完成后将清洗数据存入云存储的场景。",
+  "recommend": false
+ },
+ {
+  "name": "sdxl_prompt2prompt_mapper",
+  "scenario_group": "图像处理",
+  "zh_label": "SDXL指令编辑图像",
+  "zh_usage_tip": "用SDXL Prompt2Prompt技术对图像做内容属性编辑，适合扩充图像编辑指令数据集。",
+  "recommend": false
+ },
+ {
+  "name": "sentence_augmentation_mapper",
+  "scenario_group": "文本生成与增强",
+  "zh_label": "句子扩写增强",
+  "zh_usage_tip": "用HF模型对句子做扩写增强，适合增加文本多样性或扩充短文本训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "sentence_split_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "文本按句切分",
+  "zh_usage_tip": "将长文本按句子边界切分为独立样本，适合预处理文档级语料或句子级标注任务。",
+  "recommend": true
+ },
+ {
+  "name": "text_chunk_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "长文本分块切分",
+  "zh_usage_tip": "将超长文本切分为固定大小的文本块，适合为RAG或训练准备分块语料。",
+  "recommend": true
+ },
+ {
+  "name": "text_tagging_by_prompt_mapper",
+  "scenario_group": "信息抽取",
+  "zh_label": "vLLM提示词文本打标",
+  "zh_usage_tip": "用vLLM根据自定义提示词为文本批量打标分类，适合大规模离线标注改写场景。",
+  "recommend": false
+ },
+ {
+  "name": "tool_success_tagger_mapper",
+  "scenario_group": "对话与智能体",
+  "zh_label": "工具调用成功标记",
+  "zh_usage_tip": "对智能体轨迹中每次工具调用打成功/失败标记，是Agent数据质量筛查的常用前置步骤。",
+  "recommend": false
+ },
+ {
+  "name": "usage_counter_mapper",
+  "scenario_group": "工具与IO",
+  "zh_label": "字段使用次数统计",
+  "zh_usage_tip": "统计数据集各字段的出现频率，适合数据探索和运算内容分布分析。",
+  "recommend": false
+ },
+ {
+  "name": "vggt_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "VGGT视频几何感知",
+  "zh_usage_tip": "用VGGT模型对视频做3D几何结构感知和标注，适合具身智能和自动驾驶类训练数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "video_camera_calibration_static_deepcalib_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "DeepCalib相机标定",
+  "zh_usage_tip": "用DeepCalib模型对静态视频做相机内参标定，适合几何重建或自动驾驶训练数据的视觉效果模型。",
+  "recommend": false
+ },
+ {
+  "name": "video_camera_calibration_static_moge_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "MoGe相机标定",
+  "zh_usage_tip": "用MoGe模型对静态视频做单目深度相机标定，适合单目视频几何感知训练数据构建。",
+  "recommend": false
+ },
+ {
+  "name": "video_camera_pose_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频相机位姿估计",
+  "zh_usage_tip": "估计视频序列中每帧的相机位姿并标注，适合NeRF、具身智能等需要位姿标注的训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "video_captioning_from_audio_mapper",
+  "scenario_group": "多模态对齐",
+  "zh_label": "音频转视频字幕",
+  "zh_usage_tip": "从视频音频轨迹识别并生成字幕文本，适合为视频数据集添加音频描述层。",
+  "recommend": false
+ },
+ {
+  "name": "video_captioning_from_frames_mapper",
+  "scenario_group": "多模态对齐",
+  "zh_label": "视频帧自动标题",
+  "zh_usage_tip": "用HF模型对视频关键帧生成文字描述，适合为无文本视频数据集构建视文对训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "video_captioning_from_summarizer_mapper",
+  "scenario_group": "多模态对齐",
+  "zh_label": "视频摘要式标题生成",
+  "zh_usage_tip": "通过多帧摘要的方式为视频生成整体描述字幕，适合长视频理解训练数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "video_captioning_from_video_mapper",
+  "scenario_group": "多模态对齐",
+  "zh_label": "视频端到端自动标题",
+  "zh_usage_tip": "直接输入视频生成全局描述字幕，适合多模态视频理解模型训练数据的大规模标注。",
+  "recommend": false
+ },
+ {
+  "name": "video_captioning_from_vlm_mapper",
+  "scenario_group": "多模态对齐",
+  "zh_label": "vLLM视频标题生成",
+  "zh_usage_tip": "用本地vLLM快速为视频生成描述字幕，适合GPU资源充足时的视频标注批量任务。",
+  "recommend": false
+ },
+ {
+  "name": "video_depth_estimation_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频深度估计标注",
+  "zh_usage_tip": "对视频帧做单目深度估计并生成深度图，适合具身智能、自动驾驶训练数据的深度标注。",
+  "recommend": false
+ },
+ {
+  "name": "video_extract_frames_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频关键帧抽取",
+  "zh_usage_tip": "按帧率或关键帧策略从视频中抽取图帧，是视频转图文数据的常用前置步骤。",
+  "recommend": true
+ },
+ {
+  "name": "video_face_blur_mapper",
+  "scenario_group": "隐私脱敏",
+  "zh_label": "视频人脸模糊脱敏",
+  "zh_usage_tip": "自动检测并模糊视频中每帧的人脸，适合处理包含真实人物的公开视频数据集。",
+  "recommend": false
+ },
+ {
+  "name": "video_ffmpeg_wrapped_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "FFmpeg视频格式处理",
+  "zh_usage_tip": "用FFmpeg对视频做转码、裁剪、调色等通用处理，适合视频数据集预处理中的批量视频处理需求。",
+  "recommend": false
+ },
+ {
+  "name": "video_hand_reconstruction_hawor_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "HaWoR手部动作重建",
+  "zh_usage_tip": "用HaWoR模型从视频中重建手部动作轨迹，适合手势交互或具身智能类训练数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "video_hand_reconstruction_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频手部3D重建",
+  "zh_usage_tip": "从视频重建手部的3D网格结构并添加标注，适合手部动作截取或具身智能训练数据生产。",
+  "recommend": false
+ },
+ {
+  "name": "video_object_segmenting_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频目标分割标注",
+  "zh_usage_tip": "用HF模型对视频中的目标进行分割并添加掩码标注，适合视频实例分割训练数据准备。",
+  "recommend": false
+ },
+ {
+  "name": "video_remove_watermark_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频水印去除",
+  "zh_usage_tip": "去除视频中的固定位置水印或字幕叠加，适合清洗版权敏感的视频训练数据。",
+  "recommend": false
+ },
+ {
+  "name": "video_resize_aspect_ratio_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频宽高比调整",
+  "zh_usage_tip": "将视频裁剪或填充至指定宽高比，适合视频模型训练前的格式规格统一处理。",
+  "recommend": true
+ },
+ {
+  "name": "video_resize_resolution_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频分辨率调整",
+  "zh_usage_tip": "将视频缩放至目标分辨率，适合视频训练数据入库前的分辨率规格化处理。",
+  "recommend": true
+ },
+ {
+  "name": "video_split_by_duration_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频按时长切分",
+  "zh_usage_tip": "将长视频按固定时长切分为片段，是视频语料处理的基础分割步骤。",
+  "recommend": true
+ },
+ {
+  "name": "video_split_by_key_frame_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频按关键帧切分",
+  "zh_usage_tip": "按视频关键帧边界切分片段，适合需要语义连贯的视频片段数据集构建。",
+  "recommend": true
+ },
+ {
+  "name": "video_split_by_scene_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频按场景切分",
+  "zh_usage_tip": "检测视频内场景变化并自动切分，适合将长片分割为语义完整的单场景视频片段。",
+  "recommend": true
+ },
+ {
+  "name": "video_tagging_from_audio_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频音频标签提取",
+  "zh_usage_tip": "从视频音频轨迹提取语音标签，适合多模态视频数据集的音频内容分类标注。",
+  "recommend": false
+ },
+ {
+  "name": "video_tagging_from_frames_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频帧标签提取",
+  "zh_usage_tip": "用GPU模型从视频帧提取内容标签，适合按内容类别对视频语料自动打标。",
+  "recommend": false
+ },
+ {
+  "name": "video_undistort_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频畸变校正",
+  "zh_usage_tip": "对广角镜头拍摄的视频做畸变校正，适合自动驾驶、监控视频数据的几何校正前处理。",
+  "recommend": false
+ },
+ {
+  "name": "video_whole_body_pose_estimation_mapper",
+  "scenario_group": "视频处理",
+  "zh_label": "视频全身姿态估计",
+  "zh_usage_tip": "对视频中人物做全身关键点姿态估计并标注，适合动作识别和具身智能训练数据生产。",
+  "recommend": false
+ },
+ {
+  "name": "whitespace_normalization_mapper",
+  "scenario_group": "文本清洗",
+  "zh_label": "空白字符规范化",
+  "zh_usage_tip": "将全角、多余空格、制表符等空白字符统一规范化，是中英文语料清洗的标准前置步骤。",
+  "recommend": true
+ },
+ {
+  "name": "llm_inference_with_ray_vllm_pipeline",
+  "scenario_group": "数据集级处理",
+  "zh_label": "Ray+vLLM分布式LLM推理",
+  "zh_usage_tip": "用Ray分布式+vLLM高速推理对大规模数据集做批量LLM标注，适合TB级语料的算力密集型处理场景。",
+  "recommend": false
+ },
+ {
+  "name": "vlm_inference_with_ray_vllm_pipeline",
+  "scenario_group": "数据集级处理",
+  "zh_label": "Ray+vLLM分布式VLM推理",
+  "zh_usage_tip": "用Ray分布式+vLLM高速对图文数据集做批量VLM推理标注，适合大规模多模态数据的分布式处理。",
+  "recommend": false
+ },
+ {
+  "name": "frequency_specified_field_selector",
+  "scenario_group": "数据选择",
+  "zh_label": "字段频率选择器",
+  "zh_usage_tip": "按字段值的出现频率筛选样本，适合控制训练数据中类别或标签的频率分布均衡。",
+  "recommend": true
+ },
+ {
+  "name": "random_selector",
+  "scenario_group": "数据选择",
+  "zh_label": "随机采样选择器",
+  "zh_usage_tip": "随机按数量或比例采样数据集，是快速构建训练子集或评估集的最简单工具。",
+  "recommend": true
+ },
+ {
+  "name": "range_specified_field_selector",
+  "scenario_group": "数据选择",
+  "zh_label": "字段数值范围选择器",
+  "zh_usage_tip": "按指定字段的数值范围筛选样本，适合基于评分、长度等指标精确切取数据子集。",
+  "recommend": true
+ },
+ {
+  "name": "tags_specified_field_selector",
+  "scenario_group": "数据选择",
+  "zh_label": "标签字段匹配选择器",
+  "zh_usage_tip": "按指定字段中是否包含目标标签筛选样本，适合按标签分层构建领域训练子集。",
+  "recommend": true
+ },
+ {
+  "name": "topk_specified_field_selector",
+  "scenario_group": "数据选择",
+  "zh_label": "Top-K字段质量选择器",
+  "zh_usage_tip": "按指定字段排序选取Top-K高质量样本，适合在数据量受限时优先保留最高分的样本。",
+  "recommend": true
+ }
+]

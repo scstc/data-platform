@@ -9,9 +9,10 @@ import {
   ProFormText,
   ProTable,
 } from '@ant-design/pro-components';
+import { useModel } from '@umijs/max';
 import { Button, Drawer, message, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   createJob,
   getDataset,
@@ -41,6 +42,12 @@ const Processing: React.FC = () => {
   const [currentJob, setCurrentJob] = useState<DataPlatform.Job>();
   // 算子名 → 算子（用于按所选算子渲染参数表单）
   const [opMap, setOpMap] = useState<Record<string, DataPlatform.Operator>>({});
+  // 来自「算子市场」的待编排算子:有则自动打开新建弹窗并预选
+  const { ops: cartOps, clear: clearCart } = useModel('opCart');
+  const [createOpen, setCreateOpen] = useState(false);
+  useEffect(() => {
+    if (cartOps.length) setCreateOpen(true);
+  }, [cartOps]);
 
   const renderParamField = (
     opName: string,
@@ -132,10 +139,13 @@ const Processing: React.FC = () => {
             operators: string[];
             params?: Record<string, Record<string, unknown>>;
           }>
-            key="create"
+            key={`create-${cartOps.join(',')}`}
             title="新建加工任务"
             width={560}
             trigger={<Button type="primary">新建加工</Button>}
+            open={createOpen}
+            onOpenChange={setCreateOpen}
+            initialValues={{ operators: cartOps }}
             modalProps={{ destroyOnHidden: true }}
             onFinish={async (values) => {
               const operators = (values.operators ?? []).map((name) => ({
@@ -160,6 +170,7 @@ const Processing: React.FC = () => {
                   message.error(`加工失败：${res?.data?.error ?? '未知错误'}`);
                 }
                 actionRef.current?.reload();
+                clearCart();
                 return true;
               } catch {
                 hide();

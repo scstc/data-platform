@@ -11,20 +11,19 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.db import get_session
 from app.models.dataset import Dataset
 from app.models.dataset_version import DatasetVersion
 from app.models.job import Job
 from app.schemas.common import CamelModel, PageResponse
 from app.schemas.job import JobCreate, JobRead
+from app.services import operator_catalog as oc
 from app.services.engine import EngineError, run_process_job
-from app.services.operator_catalog import OPERATOR_CATALOG
 
 router = APIRouter(tags=["jobs"])
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
-
-_OPERATOR_NAMES = {op["name"] for op in OPERATOR_CATALOG}
 
 
 class JobItemResponse(CamelModel):
@@ -70,12 +69,6 @@ def _item(job: Job, output: dict | None = None) -> dict:
     return JobItemResponse(data=read).model_dump(by_alias=True, mode="json")
 
 
-@router.get("/operators")
-async def list_operators() -> JSONResponse:
-    """加工算子目录(供前端编排选择)。"""
-    return JSONResponse(content={"data": OPERATOR_CATALOG, "success": True})
-
-
 @router.get("/jobs", response_model=PageResponse[JobRead])
 async def list_jobs(
     session: SessionDep,
@@ -105,11 +98,24 @@ async def create_job(body: JobCreate, session: SessionDep) -> JSONResponse:
             status_code=400,
             content={"success": False, "message": "请至少选择一个算子"},
         )
-    unknown = [o.name for o in body.operators if o.name not in _OPERATOR_NAMES]
+    known = oc.operator_names()
+    unknown = [o.name for o in body.operators if o.name not in known]
     if unknown:
         return JSONResponse(
             status_code=400,
             content={"success": False, "message": f"未知算子:{', '.join(unknown)}"},
+        )
+    # 资源前置校验:把算子路由到合适后端,跑不了的直接拦截并给原因
+    llm_configured = bool(settings.openai_api_key)
+    blocked = [
+        reason
+        for o in body.operators
+        if (reason := oc.runnable_reason(o.name, llm_configured=llm_configured))
+    ]
+    if blocked:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "message": "；".join(blocked)},
         )
 
     input_version = await session.get(DatasetVersion, body.dataset_version_id)

@@ -1,0 +1,76 @@
+"""算子目录路由:兼容旧 /operators + 全量算子市场(查询/分面/详情)。
+
+设计见 docs/plan/04-算子市场设计.md。算子目录是无状态参考数据(不入库)。
+"""
+
+from __future__ import annotations
+
+from typing import Annotated
+
+from fastapi import APIRouter, Query
+from fastapi.responses import JSONResponse
+
+from app.services import operator_catalog as oc
+
+router = APIRouter(tags=["operators"])
+
+
+@router.get("/operators")
+async def list_operators() -> JSONResponse:
+    """加工算子目录(旧形态,仅 ready 算子,供加工页编排选择)。"""
+    return JSONResponse(
+        content={"data": oc.legacy_operators(), "success": True}
+    )
+
+
+# 注意:/operators/catalog* 必须声明在 /operators/{name} 之前,
+# 否则 "catalog" 会被当成 name 命中详情路由。
+@router.get("/operators/catalog/meta")
+async def catalog_meta() -> JSONResponse:
+    """算子目录概览(总数/各维度分布/推荐数),驱动市场筛选项与统计卡。"""
+    return JSONResponse(content={"data": oc.meta_api(), "success": True})
+
+
+@router.get("/operators/catalog")
+async def catalog(
+    scenario: Annotated[str | None, Query()] = None,
+    category: Annotated[str | None, Query()] = None,
+    modality: Annotated[str | None, Query()] = None,
+    resource_class: Annotated[str | None, Query(alias="resourceClass")] = None,
+    runnable: Annotated[str | None, Query()] = None,
+    recommend: Annotated[bool | None, Query()] = None,
+    keyword: Annotated[str | None, Query()] = None,
+    current: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=200, alias="pageSize")] = 24,
+) -> JSONResponse:
+    """算子市场主接口:多维分面过滤 + 分页。"""
+    result = oc.query_catalog(
+        scenario=scenario,
+        category=category,
+        modality=modality,
+        resource_class=resource_class,
+        runnable=runnable,
+        recommend=recommend,
+        keyword=keyword,
+        current=current,
+        page_size=page_size,
+    )
+    return JSONResponse(
+        content={
+            "data": [oc.to_api(op) for op in result["data"]],
+            "total": result["total"],
+            "success": True,
+        }
+    )
+
+
+@router.get("/operators/{name}")
+async def operator_detail(name: str) -> JSONResponse:
+    """单算子详情(全字段:参数表 + 示例 + 引用 + 详情页链接)。"""
+    op = oc.get_operator(name)
+    if op is None:
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "message": "算子不存在"},
+        )
+    return JSONResponse(content={"data": oc.to_api(op), "success": True})
