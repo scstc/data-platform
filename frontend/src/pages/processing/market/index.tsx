@@ -22,11 +22,8 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  getOperatorCatalogMeta,
-  listOperatorCatalog,
-} from '@/services/data-platform';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { listOperatorCatalog } from '@/services/data-platform';
 
 const { Paragraph, Text } = Typography;
 
@@ -62,55 +59,129 @@ const metaLine = (op: DataPlatform.CatalogOperator) =>
     .filter(Boolean)
     .join(' · ');
 
+const PAGE_SIZE = 24;
+
 const Market: React.FC = () => {
   const { ops: cart, add, clear } = useModel('opCart');
 
-  const [meta, setMeta] = useState<DataPlatform.OperatorCatalogMeta>();
+  // 全量算子(一次性拉取)
+  const [allOps, setAllOps] = useState<DataPlatform.CatalogOperator[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+
+  // 过滤条件
   const [scenario, setScenario] = useState<string>();
   const [keyword, setKeyword] = useState<string>();
   const [onlyReady, setOnlyReady] = useState(false);
   const [onlyRecommend, setOnlyRecommend] = useState(true);
-  const [current, setCurrent] = useState(1);
-  const pageSize = 24;
 
-  const [data, setData] = useState<DataPlatform.CatalogOperator[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
+  // 分页
+  const [current, setCurrent] = useState(1);
+
   const [detail, setDetail] = useState<DataPlatform.CatalogOperator>();
 
-  useEffect(() => {
-    getOperatorCatalogMeta().then((r) => setMeta(r.data));
+  // 拉全量目录:按 total 翻页取齐(目录是构建期快照,当前 212 条;
+  // 后端单页上限 500,目录将来超限也不会被静默截断)
+  const loadCatalog = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const first = await listOperatorCatalog({ pageSize: 500, current: 1 });
+      const ops = [...(first.data ?? [])];
+      while (ops.length < (first.total ?? 0)) {
+        const next = await listOperatorCatalog({
+          pageSize: 500,
+          current: Math.floor(ops.length / 500) + 1,
+        });
+        if (!next.data?.length) break;
+        ops.push(...next.data);
+      }
+      setAllOps(ops);
+    } catch {
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    listOperatorCatalog({
-      scenario,
-      keyword,
-      runnable: onlyReady ? 'ready' : undefined,
-      recommend: onlyRecommend || undefined,
-      current,
-      pageSize,
-    })
-      .then((r) => {
-        setData(r.data);
-        setTotal(r.total);
-      })
-      .finally(() => setLoading(false));
-  }, [scenario, keyword, onlyReady, onlyRecommend, current]);
+    loadCatalog();
+  }, [loadCatalog]);
 
+  // 先按开关 + 关键字过滤(不含场景),用于计算分面计数
+  const switchFiltered = useMemo(() => {
+    return allOps.filter((op) => {
+      if (onlyReady && op.runnable !== 'ready') return false;
+      if (onlyRecommend && !op.recommend) return false;
+      if (keyword) {
+        const kw = keyword.toLowerCase();
+        if (
+          !op.name.toLowerCase().includes(kw) &&
+          !op.zhLabel.toLowerCase().includes(kw) &&
+          !(op.summaryZh ?? '').toLowerCase().includes(kw)
+        )
+          return false;
+      }
+      return true;
+    });
+  }, [allOps, onlyReady, onlyRecommend, keyword]);
+
+  // 分面计数:在 switchFiltered 上按场景分组
+  const scenarioCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const op of switchFiltered) {
+      const sg = op.scenarioGroup ?? '';
+      counts[sg] = (counts[sg] ?? 0) + 1;
+    }
+    return counts;
+  }, [switchFiltered]);
+
+  // 场景全集(成员与排序按全量算子数固定,不随开关增减——0 计数类目保留置灰)
+  const allScenarios = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const op of allOps) {
+      const sg = op.scenarioGroup ?? '';
+      totals[sg] = (totals[sg] ?? 0) + 1;
+    }
+    return Object.entries(totals)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name]) => name);
+  }, [allOps]);
+
+  // 左侧菜单项(计数随开关/搜索实时变化,与列表同源)
   const menuItems = useMemo(() => {
-    const groups = Object.entries(meta?.byScenario ?? {}).sort(
-      (a, b) => b[1] - a[1],
-    );
     return [
-      { key: 'all', label: `全部　${meta?.total ?? ''}` },
-      ...groups.map(([name, count]) => ({
-        key: name,
-        label: `${name}　${count}`,
-      })),
+      { key: 'all', label: `全部　${switchFiltered.length}` },
+      ...allScenarios.map((name) => {
+        const count = scenarioCounts[name] ?? 0;
+        return {
+          key: name,
+          label: `${name}　${count}`,
+          style: count === 0 ? { opacity: 0.45 } : undefined,
+        };
+      }),
     ];
-  }, [meta]);
+  }, [allScenarios, scenarioCounts, switchFiltered.length]);
+
+  // 最终展示列表(在 switchFiltered 基础上再加场景过滤)
+  const filtered = useMemo(() => {
+    if (!scenario) return switchFiltered;
+    return switchFiltered.filter((op) => op.scenarioGroup === scenario);
+  }, [switchFiltered, scenario]);
+
+  // 当前页数据
+  const pageData = useMemo(() => {
+    const start = (current - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, current]);
+
+  // 页头统计(来自全量,不受过滤影响)
+  const headerStats = useMemo(() => {
+    if (allOps.length === 0) return null;
+    const readyCount = allOps.filter((op) => op.runnable === 'ready').length;
+    const recCount = allOps.filter((op) => op.recommend).length;
+    return `共 ${allOps.length} 个算子 · ${readyCount} 个现在可运行 · ${recCount} 个推荐`;
+  }, [allOps]);
 
   const onAdd = (op: DataPlatform.CatalogOperator) => {
     add(op.name);
@@ -119,11 +190,7 @@ const Market: React.FC = () => {
 
   return (
     <PageContainer
-      content={
-        meta
-          ? `共 ${meta.total} 个算子 · ${meta.byRunnable.ready ?? 0} 个现在可运行 · ${meta.recommended} 个推荐`
-          : ' '
-      }
+      content={headerStats ?? ' '}
       footer={
         cart.length
           ? [
@@ -204,9 +271,25 @@ const Market: React.FC = () => {
               </Space>
             </Space>
 
-            {!loading && data.length === 0 ? (
+            {loadError ? (
+              <Alert
+                type="error"
+                showIcon
+                message="算子目录加载失败"
+                description="请检查后端服务(:18003)是否在运行。"
+                action={
+                  <Button size="small" onClick={loadCatalog}>
+                    重试
+                  </Button>
+                }
+              />
+            ) : !loading && filtered.length === 0 ? (
               <Empty
-                description="没有符合条件的算子"
+                description={
+                  scenario && (scenarioCounts[scenario] ?? 0) === 0
+                    ? '当前筛选下无算子,可关闭「仅推荐」查看全部'
+                    : '没有符合条件的算子'
+                }
                 style={{ padding: '48px 0' }}
               />
             ) : (
@@ -219,7 +302,7 @@ const Market: React.FC = () => {
                     gap: 16,
                   }}
                 >
-                  {data.map((op) => {
+                  {pageData.map((op) => {
                     const badge = RUNNABLE_BADGE[op.runnable];
                     const inCart = cart.includes(op.name);
                     return (
@@ -313,12 +396,12 @@ const Market: React.FC = () => {
                     );
                   })}
                 </div>
-                {total > pageSize && (
+                {filtered.length > PAGE_SIZE && (
                   <div style={{ marginTop: 16, textAlign: 'center' }}>
                     <Pagination
                       current={current}
-                      pageSize={pageSize}
-                      total={total}
+                      pageSize={PAGE_SIZE}
+                      total={filtered.length}
                       showSizeChanger={false}
                       onChange={setCurrent}
                     />

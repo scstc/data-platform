@@ -41,7 +41,7 @@ async def catalog(
     recommend: Annotated[bool | None, Query()] = None,
     keyword: Annotated[str | None, Query()] = None,
     current: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Query(ge=1, le=200, alias="pageSize")] = 24,
+    page_size: Annotated[int, Query(ge=1, le=500, alias="pageSize")] = 24,
 ) -> JSONResponse:
     """算子市场主接口:多维分面过滤 + 分页。"""
     result = oc.query_catalog(
