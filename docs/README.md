@@ -13,5 +13,6 @@
 | `specs/2026-06-04-frontend-design.md` | 前端项目设计文档(Ant Design Pro v6,平台壳+数据接入,已批准) |
 | `specs/2026-06-04-backend-design.md` | 后端项目设计文档(FastAPI+PostgreSQL,实现前端契约,已批准) |
 | `plan/` | 实现规划:从现状到满足 20 项需求的任务清单(todolist)与里程碑建议 |
+| `research/bcc-数据接入调研.md` | BCC PaaS「数据接入」功能实探报告:8 种数据源、字段级 UI 细节、兄弟页面概览及对本项目的参考意义(2026-06-11) |
 
 > 新增文档时,请在上表登记,保持索引最新。
