@@ -329,7 +329,7 @@ export async function listOperators(options?: { [key: string]: any }) {
 
 /** 加工任务列表 GET /api/v1/jobs */
 export async function listJobs(
-  params?: { current?: number; pageSize?: number },
+  params?: { current?: number; pageSize?: number; type?: string },
   options?: { [key: string]: any },
 ) {
   return request<DataPlatform.PageResult<DataPlatform.Job>>('/api/v1/jobs', {
@@ -356,6 +356,42 @@ export async function createJob(
 export async function getJob(id: string, options?: { [key: string]: any }) {
   return request<{ data: DataPlatform.Job; success: boolean }>(
     `/api/v1/jobs/${id}`,
+    { method: 'GET', ...(options || {}) },
+  );
+}
+
+/** 新建并执行质量评估任务 POST /api/v1/quality/jobs */
+export async function createQualityJob(
+  body: DataPlatform.QualityJobCreate,
+  options?: { [key: string]: any },
+) {
+  return request<{ data: DataPlatform.Job; success: boolean }>('/api/v1/quality/jobs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+/** 逐条质量得分 GET /api/v1/dataset-versions/{versionId}/stats */
+export async function getVersionStats(
+  versionId: string,
+  params?: { current?: number; pageSize?: number },
+  options?: { [key: string]: any },
+) {
+  return request<DataPlatform.VersionStatsResult>(
+    `/api/v1/dataset-versions/${versionId}/stats`,
+    { method: 'GET', params: { ...params }, ...(options || {}) },
+  );
+}
+
+/** 质量分析报告 GET /api/v1/dataset-versions/{versionId}/quality-report */
+export async function getQualityReport(
+  versionId: string,
+  options?: { [key: string]: any },
+) {
+  return request<{ data: DataPlatform.QualityReport; success: boolean }>(
+    `/api/v1/dataset-versions/${versionId}/quality-report`,
     { method: 'GET', ...(options || {}) },
   );
 }

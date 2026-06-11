@@ -24,6 +24,14 @@ class JobCreate(CamelModel):
     operators: list[OperatorSpec]
 
 
+class QualityJobCreate(CamelModel):
+    """新建质量评估任务入参(#6):对某个数据集版本逐条算 filter stats。"""
+
+    name: str
+    dataset_version_id: str
+    operators: list[OperatorSpec]
+
+
 class JobRead(CamelModel):
     """加工任务读模型。"""
 
@@ -39,3 +47,5 @@ class JobRead(CamelModel):
     finished_at: datetime | None = None
     # 产物概要：{datasetId, datasetName, versionId, versionNo, rows}
     output: dict[str, Any] | None = None
+    # 输入版本概要(经 job_inputs 反查)：{datasetId, datasetName, versionId, versionNo}
+    input: dict[str, Any] | None = None

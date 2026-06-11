@@ -16,6 +16,7 @@ from app.core.db import get_session
 from app.models.dataset import Dataset
 from app.models.dataset_version import DatasetVersion
 from app.models.job import Job
+from app.models.job_input import JobInput
 from app.schemas.common import CamelModel, PageResponse
 from app.schemas.job import JobCreate, JobRead
 from app.services import operator_catalog as oc
@@ -62,10 +63,34 @@ async def _build_output(session: AsyncSession, job_id: str) -> dict | None:
     }
 
 
-def _item(job: Job, output: dict | None = None) -> dict:
+async def _build_input(session: AsyncSession, job_id: str) -> dict | None:
+    """查该任务的输入版本(经 job_inputs 血缘边反查,镜像 _build_output)。"""
+    stmt = (
+        select(DatasetVersion, Dataset)
+        .join(JobInput, JobInput.dataset_version_id == DatasetVersion.id)
+        .join(Dataset, Dataset.id == DatasetVersion.dataset_id)
+        .where(JobInput.job_id == job_id)
+    )
+    row = (await session.execute(stmt)).first()
+    if row is None:
+        return None
+    version, dataset = row
+    return {
+        "datasetId": dataset.id,
+        "datasetName": dataset.name,
+        "versionId": version.id,
+        "versionNo": version.version_no,
+    }
+
+
+def _item(
+    job: Job, output: dict | None = None, input_: dict | None = None
+) -> dict:
     read = JobRead.model_validate(job)
     if output is not None:
         read.output = output
+    if input_ is not None:
+        read.input = input_
     return JobItemResponse(data=read).model_dump(by_alias=True, mode="json")
 
 
@@ -73,21 +98,29 @@ def _item(job: Job, output: dict | None = None) -> dict:
 async def list_jobs(
     session: SessionDep,
     current: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Query(ge=1, alias="pageSize")] = 10,
+    page_size: Annotated[int, Query(ge=1, le=100, alias="pageSize")] = 10,
+    type_: Annotated[str | None, Query(alias="type")] = None,
 ) -> PageResponse[JobRead]:
-    """分页列出加工任务,按创建时间倒序。"""
-    total = await session.scalar(select(func.count()).select_from(Job)) or 0
+    """分页列出加工任务,按创建时间倒序;可按 type 过滤(如 type=quality)。"""
+    count_stmt = select(func.count()).select_from(Job)
+    list_stmt = select(Job)
+    if type_:
+        count_stmt = count_stmt.where(Job.type == type_)
+        list_stmt = list_stmt.where(Job.type == type_)
+    total = await session.scalar(count_stmt) or 0
     rows = (
         await session.scalars(
-            select(Job)
-            .order_by(Job.created_at.desc())
+            list_stmt.order_by(Job.created_at.desc())
             .offset((current - 1) * page_size)
             .limit(page_size)
         )
     ).all()
-    return PageResponse[JobRead](
-        data=[JobRead.model_validate(r) for r in rows], total=total
-    )
+    data: list[JobRead] = []
+    for r in rows:
+        read = JobRead.model_validate(r)
+        read.input = await _build_input(session, r.id)
+        data.append(read)
+    return PageResponse[JobRead](data=data, total=total)
 
 
 @router.post("/jobs")
@@ -156,12 +189,13 @@ async def create_job(body: JobCreate, session: SessionDep) -> JSONResponse:
     await session.refresh(job)
 
     output = await _build_output(session, job.id)
-    return JSONResponse(content=_item(job, output))
+    input_ = await _build_input(session, job.id)
+    return JSONResponse(content=_item(job, output, input_))
 
 
 @router.get("/jobs/{job_id}")
 async def get_job(job_id: str, session: SessionDep) -> JSONResponse:
-    """加工任务详情(含产物版本)。"""
+    """加工任务详情(含产物版本与输入版本)。"""
     job = await session.get(Job, job_id)
     if job is None:
         return JSONResponse(
@@ -169,4 +203,5 @@ async def get_job(job_id: str, session: SessionDep) -> JSONResponse:
             content={"success": False, "message": "任务不存在"},
         )
     output = await _build_output(session, job.id)
-    return JSONResponse(content=_item(job, output))
+    input_ = await _build_input(session, job.id)
+    return JSONResponse(content=_item(job, output, input_))

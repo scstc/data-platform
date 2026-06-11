@@ -47,11 +47,13 @@ def build_config(
     for op in operators:
         params = op.get("params") or {}
         process.append({op["name"]: (params or None)})
+    # 路径统一正斜杠:DJ 用 POSIX shlex 解析 dataset_path,Windows 反斜杠
+    # 会被当转义符吞掉,路径残缺后被误判成 huggingface 数据集
     return {
         "project_name": project_name,
-        "dataset_path": input_path,
+        "dataset_path": Path(input_path).as_posix(),
         "np": settings.engine_np,
-        "export_path": output_path,
+        "export_path": Path(output_path).as_posix(),
         "process": process,
     }
 

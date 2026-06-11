@@ -171,6 +171,8 @@ declare namespace DataPlatform {
     startedAt?: string;
     finishedAt?: string;
     output?: IngestOutput;
+    /** 输入数据集版本（通过 job_input 血缘反查；quality 任务 output 为空） */
+    input?: IngestOutput;
   };
 
   /** 新建加工任务入参 */
@@ -179,6 +181,55 @@ declare namespace DataPlatform {
     type?: string;
     datasetVersionId: string;
     operators: { name: string; params?: Record<string, any> }[];
+  };
+
+  /** 新建质量评估任务入参 */
+  type QualityJobCreate = {
+    name: string;
+    datasetVersionId: string;
+    operators: { name: string; params?: Record<string, any> }[];
+  };
+
+  /** 逐条质量得分行 */
+  type VersionStatsRow = {
+    index: number;
+    text: string;
+    stats: Record<string, any>;
+  };
+
+  /** 逐条质量得分响应 */
+  type VersionStatsResult = {
+    data: VersionStatsRow[];
+    total: number;
+    metrics: string[];
+    success: boolean;
+    message?: string;
+  };
+
+  /** 质量报告直方图分桶 */
+  type HistogramBucket = {
+    x0: number;
+    x1: number;
+    count: number;
+  };
+
+  /** 质量报告单指标统计 */
+  type QualityMetric = {
+    name: string;
+    count: number;
+    mean: number;
+    min: number;
+    max: number;
+    p25: number;
+    p50: number;
+    p75: number;
+    histogram: HistogramBucket[];
+  };
+
+  /** 质量分析报告 */
+  type QualityReport = {
+    rows: number;
+    metrics: QualityMetric[];
   };
 
   /** 数据集版本（不可变快照） */

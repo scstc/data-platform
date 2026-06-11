@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -36,6 +39,8 @@ class Settings(BaseSettings):
     dj_process_bin: str = (
         "/Users/enjoy/ai-project/ai-data-platform/data-juicer/.venv/bin/dj-process"
     )
+    # data-juicer 质量评估:dj-analyze 可执行文件(留空则取 dj_process_bin 同目录)
+    dj_analyze_bin: str = ""
     # 单 job 内并行度(传给 dj-process 的 np)
     engine_np: int = 2
     # 多 job 并发上限(信号量,避免单机被打爆)
@@ -46,6 +51,15 @@ class Settings(BaseSettings):
         "http://localhost:8001",
         "http://127.0.0.1:8001",
     ]
+
+    @model_validator(mode="after")
+    def _derive_dj_analyze_bin(self) -> Settings:
+        """dj_analyze_bin 未显式配置时,默认与 dj_process_bin 同目录。"""
+        if not self.dj_analyze_bin:
+            self.dj_analyze_bin = str(
+                Path(self.dj_process_bin).parent / "dj-analyze"
+            )
+        return self
 
 
 settings = Settings()

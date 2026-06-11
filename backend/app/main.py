@@ -13,6 +13,7 @@ from app.api.v1 import (
     ingest_tasks,
     jobs,
     operators,
+    quality,
     uploads,
 )
 from app.core.config import settings
@@ -34,6 +35,7 @@ def create_app() -> FastAPI:
     app.include_router(datasets.router, prefix="/api/v1")
     app.include_router(jobs.router, prefix="/api/v1")
     app.include_router(operators.router, prefix="/api/v1")
+    app.include_router(quality.router, prefix="/api/v1")
     app.include_router(ingest_tasks.router, prefix="/api/v1")
     app.include_router(uploads.router, prefix="/api/v1")
     app.include_router(ai.router, prefix="/api/v1")
