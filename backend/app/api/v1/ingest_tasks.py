@@ -26,8 +26,8 @@ from app.core.db import get_session
 from app.models.dataset import Dataset
 from app.models.dataset_version import DatasetVersion
 from app.models.datasource import DataSource
-from app.models.ingest_run import IngestRun
 from app.models.ingest_task import IngestTask
+from app.models.job import Job
 from app.schemas.common import CamelModel, PageResponse
 from app.schemas.ingest_task import (
     IngestRunRead,
@@ -57,9 +57,9 @@ def _new_task_id() -> str:
     return f"task-{secrets.token_hex(3)}"
 
 
-def _new_run_id() -> str:
-    """生成 "run-" + 6 位 hex 主键。"""
-    return f"run-{secrets.token_hex(3)}"
+def _new_job_id() -> str:
+    """生成 "job-" + 6 位 hex 主键(每次运行一条 type=ingest 的 job)。"""
+    return f"job-{secrets.token_hex(3)}"
 
 
 def _now() -> datetime:
@@ -84,11 +84,12 @@ def _item(task: IngestTask, output: list[dict] | None = None) -> dict:
 
 
 async def _build_output(session: AsyncSession, task_id: str) -> list[dict]:
-    """查该任务的全部产物数据集（按 produced_by_job_id 反查，可能多个）。"""
+    """查该任务的全部产物数据集(经各次运行 job 的 produced_by_job_id 反查)。"""
     stmt = (
         select(DatasetVersion, Dataset)
         .join(Dataset, Dataset.id == DatasetVersion.dataset_id)
-        .where(DatasetVersion.produced_by_job_id == task_id)
+        .join(Job, Job.id == DatasetVersion.produced_by_job_id)
+        .where(Job.ingest_task_id == task_id)
         .order_by(DatasetVersion.created_at)
     )
     rows = (await session.execute(stmt)).all()
@@ -242,20 +243,24 @@ async def rerun_ingest_task(
         task.status = "running"
         started = task.last_run_at or _now()
         task.logs = [*task.logs, "[INFO] 开始采集(PostgreSQL 真实拉取)"]
+        # 每次运行一条 type=ingest 的 job(收编后 ingest_runs 的替代)
+        job = Job(
+            id=_new_job_id(),
+            name=task.name,
+            type="ingest",
+            ingest_task_id=task.id,
+            state="running",
+            progress=0,
+            created_by="admin",
+            started_at=started,
+        )
+        session.add(job)
         await session.commit()
         try:
-            results = await run_pg_ingest(session, task, datasource)
+            results = await run_pg_ingest(
+                session, task, datasource, job_id=job.id
+            )
             total_rows = sum(v.rows or 0 for _, v in results)
-            outputs = [
-                {
-                    "datasetId": ds.id,
-                    "datasetName": ds.name,
-                    "versionId": v.id,
-                    "versionNo": v.version_no,
-                    "rows": v.rows,
-                }
-                for ds, v in results
-            ]
             task.status = "success"
             task.progress = PROGRESS_DONE
             task.logs = [
@@ -265,33 +270,14 @@ async def rerun_ingest_task(
                 + "、".join(f"{ds.name}({v.rows or 0}行)" for ds, v in results),
                 "[INFO] 任务完成",
             ]
-            session.add(
-                IngestRun(
-                    id=_new_run_id(),
-                    task_id=task.id,
-                    status="success",
-                    rows=total_rows,
-                    dataset_count=len(results),
-                    outputs=outputs,
-                    started_at=started,
-                    finished_at=_now(),
-                )
-            )
+            job.state = "success"
+            job.progress = PROGRESS_DONE
         except IngestError as exc:
             task.status = "failed"
             task.logs = [*task.logs, f"[ERROR] 采集失败:{exc}"]
-            session.add(
-                IngestRun(
-                    id=_new_run_id(),
-                    task_id=task.id,
-                    status="failed",
-                    rows=0,
-                    dataset_count=0,
-                    error=str(exc),
-                    started_at=started,
-                    finished_at=_now(),
-                )
-            )
+            job.state = "failed"
+            job.error = str(exc)
+        job.finished_at = _now()
         task.run_count += 1
     else:
         task.status = "running"
@@ -311,26 +297,67 @@ async def list_ingest_runs(
     current: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, alias="pageSize")] = 20,
 ) -> PageResponse[IngestRunRead]:
-    """某采集任务的运行记录,按开始时间倒序。"""
-    base = select(IngestRun).where(IngestRun.task_id == task_id)
+    """某采集任务的运行记录(jobs 表 type=ingest),按开始时间倒序。
+
+    wire 形态与收编前的 ingest_runs 保持一致;rows/outputs 由产物版本
+    (produced_by_job_id)反查推导。
+    """
+    where = Job.ingest_task_id == task_id
     total = (
         await session.scalar(
-            select(func.count()).select_from(IngestRun).where(
-                IngestRun.task_id == task_id
-            )
+            select(func.count()).select_from(Job).where(where)
         )
         or 0
     )
-    rows = (
+    jobs = (
         await session.scalars(
-            base.order_by(IngestRun.started_at.desc())
+            select(Job)
+            .where(where)
+            .order_by(Job.started_at.desc())
             .offset((current - 1) * page_size)
             .limit(page_size)
         )
     ).all()
-    return PageResponse[IngestRunRead](
-        data=[IngestRunRead.model_validate(r) for r in rows], total=total
-    )
+
+    # 一次查出本页 job 的全部产物,按 job 分组
+    outputs_by_job: dict[str, list[dict]] = {}
+    if jobs:
+        stmt = (
+            select(DatasetVersion, Dataset)
+            .join(Dataset, Dataset.id == DatasetVersion.dataset_id)
+            .where(
+                DatasetVersion.produced_by_job_id.in_([j.id for j in jobs])
+            )
+            .order_by(DatasetVersion.created_at)
+        )
+        for version, dataset in (await session.execute(stmt)).all():
+            outputs_by_job.setdefault(version.produced_by_job_id, []).append(
+                {
+                    "datasetId": dataset.id,
+                    "datasetName": dataset.name,
+                    "versionId": version.id,
+                    "versionNo": version.version_no,
+                    "rows": version.rows,
+                }
+            )
+
+    data = []
+    for job in jobs:
+        outputs = outputs_by_job.get(job.id, [])
+        data.append(
+            IngestRunRead(
+                id=job.id,
+                task_id=task_id,
+                status=job.state,
+                rows=sum(o["rows"] or 0 for o in outputs),
+                dataset_count=len(outputs),
+                outputs=outputs or None,
+                error=job.error,
+                started_at=job.started_at or job.created_at,
+                finished_at=job.finished_at,
+            )
+        )
+    return PageResponse[IngestRunRead](data=data, total=total)
 
 
 @router.post("/ingest-tasks/{task_id}/stop")

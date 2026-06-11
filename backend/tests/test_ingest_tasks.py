@@ -224,3 +224,109 @@ async def test_list_pagination_and_filters(
     body = resp.json()
     assert body["total"] == 3
     assert len(body["data"]) == 2
+
+
+# ---------------------------------------------------------------------------
+# 收编(0005):每次运行产一条 jobs 表 type=ingest 记录
+# ---------------------------------------------------------------------------
+@pytest.mark.asyncio
+async def test_pg_rerun_creates_ingest_job_and_lineage(
+    client: AsyncClient,
+    session_factory: async_sessionmaker,
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """PG 真实拉取:运行产 job(type=ingest),产物版本血缘指向该 job,
+    runs 端点(读 jobs 表)回放 wire 形态与收编前一致。"""
+    from urllib.parse import urlparse
+
+    from app.core.config import settings
+    from tests.conftest import TEST_DATABASE_URL
+
+    monkeypatch.setattr(settings, "datasets_dir", str(tmp_path))
+
+    # 数据源指向测试库自身(asyncpg 直连)
+    u = urlparse(TEST_DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://"))
+    async with session_factory() as session:
+        from app.models.datasource import DataSource as DS
+
+        session.add(
+            DS(
+                id="ds-pg-self",
+                name="测试库自身",
+                type="database",
+                db_kind="postgresql",
+                status="connected",
+                config={
+                    "host": u.hostname,
+                    "port": u.port,
+                    "database": u.path.lstrip("/"),
+                    "username": u.username,
+                    "password": u.password,
+                },
+                creator="admin",
+            )
+        )
+        await session.commit()
+
+    resp = await client.post(
+        "/api/v1/ingest-tasks",
+        json={
+            "name": "PG真实采集",
+            "datasourceId": "ds-pg-self",
+            "schedule": {"mode": "once"},
+            "extract": {"mode": "sql", "sql": "SELECT 1 AS num, 'hi' AS text"},
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    task_id = resp.json()["data"]["id"]
+
+    # 运行:同步真实拉取
+    resp = await client.post(f"/api/v1/ingest-tasks/{task_id}/rerun")
+    body = resp.json()
+    assert body["data"]["status"] == "success", body
+    assert body["data"]["runCount"] == 1
+
+    # jobs 表多了一条 type=ingest,且通用 /jobs 列表可见
+    resp = await client.get("/api/v1/jobs", params={"type": "ingest"})
+    jobs = resp.json()["data"]
+    assert len(jobs) == 1 and jobs[0]["type"] == "ingest"
+    job_id = jobs[0]["id"]
+
+    # 产物版本血缘指向本次运行的 job(而非 task)
+    async with session_factory() as session:
+        from sqlalchemy import select
+
+        from app.models.dataset_version import DatasetVersion as DV
+
+        version = (await session.scalars(select(DV))).one()
+        assert version.produced_by_job_id == job_id
+        assert version.rows == 1
+
+    # runs 端点 wire 形态与收编前一致
+    resp = await client.get(f"/api/v1/ingest-tasks/{task_id}/runs")
+    body = resp.json()
+    assert body["total"] == 1
+    run = body["data"][0]
+    assert run["id"] == job_id
+    assert run["status"] == "success"
+    assert run["rows"] == 1
+    assert run["datasetCount"] == 1
+    assert run["outputs"][0]["versionNo"] == 1
+
+    # 任务详情的产物列表经 job 反查
+    resp = await client.get(f"/api/v1/ingest-tasks/{task_id}")
+    output = resp.json()["data"]["output"]
+    assert len(output) == 1 and output[0]["rows"] == 1
+
+
+@pytest.mark.asyncio
+async def test_runs_empty_for_task_without_jobs(
+    client: AsyncClient, session_factory: async_sessionmaker
+) -> None:
+    """无运行记录的任务:runs 端点返回空列表。"""
+    ds = await _seed_datasource(session_factory)
+    task = await _create_task(client, ds.id)
+    resp = await client.get(f"/api/v1/ingest-tasks/{task['id']}/runs")
+    body = resp.json()
+    assert body["total"] == 0 and body["data"] == []

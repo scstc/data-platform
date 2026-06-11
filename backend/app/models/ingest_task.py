@@ -29,7 +29,7 @@ class IngestTask(Base):
     # 状态：pending | running | success | failed
     status: Mapped[str] = mapped_column(String, nullable=False)
     progress: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    # 累计运行次数(冗余计数,避免列表 N+1;明细见 ingest_runs 表)
+    # 累计运行次数(冗余计数,避免列表 N+1;明细见 jobs 表 type=ingest)
     run_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     # 日志列表 list[str]
     logs: Mapped[list[str]] = mapped_column(JSONB, nullable=False)

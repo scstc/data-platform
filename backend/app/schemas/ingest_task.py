@@ -49,11 +49,12 @@ class IngestTaskRead(CamelModel):
 
 
 class IngestRunRead(CamelModel):
-    """采集运行记录读模型(一次运行明细)。"""
+    """采集运行记录读模型(一次运行明细,数据来自 jobs 表 type=ingest)。"""
 
     id: str
     task_id: str
-    status: Literal["success", "failed"]
+    # running 仅在进程中途崩溃遗留时出现(正常路径同步跑完即终态)
+    status: Literal["success", "failed", "running"]
     rows: int
     dataset_count: int
     outputs: list[dict[str, Any]] | None = None

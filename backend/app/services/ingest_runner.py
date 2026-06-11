@@ -81,10 +81,15 @@ async def list_tables(cfg: dict[str, Any]) -> list[str]:
 
 
 async def run_pg_ingest(
-    session: AsyncSession, task: IngestTask, datasource: DataSource
+    session: AsyncSession,
+    task: IngestTask,
+    datasource: DataSource,
+    *,
+    job_id: str,
 ) -> list[tuple[Dataset, DatasetVersion]]:
     """真实拉取 PostgreSQL → 每张表/查询经 land_records 各落地一个受管版本。
 
+    产物版本经 produced_by_job_id 关联到本次运行的 job(type=ingest)。
     遇到某条查询失败即中止(更早成功的已落地数据集保留),原因上抛。
     """
     queries = _build_queries(task.extract)
@@ -102,7 +107,7 @@ async def run_pg_ingest(
                     records,
                     dataset_name=name,
                     note=f"采集落地:{task.name}(来源 {datasource.name})",
-                    produced_by_job_id=task.id,
+                    produced_by_job_id=job_id,
                 )
                 results.append((ds, ver))
         finally:

@@ -14,7 +14,8 @@ class Job(Base):
     """通用任务:读入版本、跑 data-juicer、产出新版本。
 
     `type` + `config_yaml` 做特化;ingest/clean/quality/synth/process/safety/annotate
-    共用此表与状态机。承载 #6–#10;后续 ingest_task 收编进此表(type=ingest)。
+    共用此表与状态机。承载 #6–#10;采集任务每次运行也产一条 type=ingest 记录
+    (ingest_task 收编,原 ingest_runs 表已退役,见迁移 0005)。
     """
 
     __tablename__ = "jobs"
@@ -24,6 +25,10 @@ class Job(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     # 类型:ingest | clean | quality | synth | process | safety | annotate
     type: Mapped[str] = mapped_column(String, nullable=False)
+    # type=ingest 时回指所属采集任务配置(ingest_tasks.id);其余类型为空
+    ingest_task_id: Mapped[str | None] = mapped_column(
+        String, nullable=True, index=True
+    )
     # 状态机:pending | running | success | failed | cancelled
     state: Mapped[str] = mapped_column(String, nullable=False, default="pending")
     # data-juicer recipe(由 YAML 生成器产出);可空(草稿/排队中)
