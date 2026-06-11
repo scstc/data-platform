@@ -123,6 +123,8 @@
 | 分类名称 | 文本 | 是 | 最多 50 字 |
 | 分类备注 | 文本 | 否 | 最多 200 字 |
 
+![分类管理对话框](images/bcc-category-mgmt-dialog.png)
+
 ---
 
 ### 4.2 SQL 接入
@@ -165,6 +167,8 @@ SQL 接入是 8 种数据源中**唯一的数据库连接型**（非文件上传
 底部按钮：取消、**测试连接**、**保存**（测试连接与保存分离，可先验证再提交）。
 
 ![SQL 接入视图](images/bcc-dataaccess-sql.png)
+
+![创建连接对话框](images/bcc-sql-create-dialog.png)
 
 ---
 

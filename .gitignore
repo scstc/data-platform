@@ -15,3 +15,4 @@ venv/
 
 # oh-my-claudecode 工具本机会话状态
 .omc/
+.playwright-mcp/
