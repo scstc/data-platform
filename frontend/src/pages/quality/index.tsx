@@ -494,7 +494,7 @@ const Quality: React.FC = () => {
       />
 
       <Drawer
-        width={760}
+        size={760}
         open={detailOpen}
         title={currentJob?.name}
         onClose={() => {
