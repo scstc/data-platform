@@ -59,7 +59,7 @@ export default {
   'menu.quality': 'Quality Assessment',
   'menu.processing': 'Data Processing',
   'menu.processing.jobs': 'Processing Jobs',
-  'menu.processing.market': 'Operator Market',
+  'menu.operators': 'Operator Market',
   'menu.dataTasks': 'Data Tasks',
   'menu.lineage': 'Data Lineage',
   'menu.annotation': 'Data Annotation',

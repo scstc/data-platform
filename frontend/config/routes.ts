@@ -81,11 +81,17 @@ export default [
         component: './processing',
       },
       {
+        // 旧路径兼容:算子市场已提升为一级菜单 /operators
         path: '/processing/market',
-        name: 'market',
-        component: './processing/market',
+        redirect: '/operators',
       },
     ],
+  },
+  {
+    path: '/operators',
+    name: 'operators',
+    icon: 'appstore',
+    component: './processing/market',
   },
   {
     path: '/quality',
